@@ -147,6 +147,43 @@
   .confirm:hover{background:var(--accent-hover);}
   .err{color:var(--accent);font-size:12px;margin-top:6px;display:none;}
 
+  .type-toggle{display:flex;gap:8px;}
+  .type-btn{
+    flex:1;padding:8px 0;border-radius:4px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text-dim);font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .15s;
+  }
+  .type-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .ep-row{display:flex;gap:8px;margin-bottom:8px;}
+  .ep-row input{flex:1;}
+  .ep-row input.ep-title{flex:0 0 40%;}
+  .ep-remove{
+    background:transparent;border:1px solid var(--border);color:var(--text-dim);
+    border-radius:4px;width:36px;cursor:pointer;font-size:16px;
+  }
+  .ep-remove:hover{color:var(--accent);border-color:var(--accent);}
+  .ep-add-btn{
+    background:transparent;border:1px dashed var(--border);color:var(--text-dim);
+    padding:8px 14px;border-radius:4px;font-size:13px;cursor:pointer;width:100%;margin-top:4px;
+  }
+  .ep-add-btn:hover{color:var(--text);border-color:var(--text-dim);}
+  .type-pill{
+    position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);color:var(--text);
+    font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 7px;border-radius:3px;z-index:1;
+  }
+  .ep-sidebar{
+    max-height:70vh;overflow-y:auto;border-left:1px solid var(--border);
+    width:240px;flex:0 0 240px;
+  }
+  .ep-item{
+    padding:12px 14px;cursor:pointer;font-size:13px;color:var(--text-dim);
+    border-bottom:1px solid var(--border);transition:background .12s;
+  }
+  .ep-item:hover{background:var(--panel-2);color:var(--text);}
+  .ep-item.playing{color:var(--accent);font-weight:600;background:var(--panel-2);}
+  .player-body{display:flex;}
+  .player-main{flex:1;min-width:0;}
+
   .player-modal .modal{max-width:900px;padding:0;overflow:hidden;}
   .player-modal video{width:100%;display:block;max-height:70vh;background:#000;}
   .player-info{padding:18px 22px;}
@@ -196,10 +233,22 @@
 <div class="overlay" id="add-overlay">
   <div class="modal">
     <h3>Aggiungi un titolo</h3>
+    <label>Tipo</label>
+    <div class="type-toggle">
+      <button type="button" class="type-btn active" id="type-film" onclick="setType('film')">Film</button>
+      <button type="button" class="type-btn" id="type-serie" onclick="setType('serie')">Serie TV</button>
+    </div>
     <label>Titolo</label>
     <input id="f-title" placeholder="Es. Il mio documentario" />
-    <label>Link video diretto (mp4, webm...)</label>
-    <input id="f-video" placeholder="https://..." />
+    <div id="film-fields">
+      <label>Link video diretto (mp4, webm...)</label>
+      <input id="f-video" placeholder="https://..." />
+    </div>
+    <div id="serie-fields" style="display:none;">
+      <label>Episodi</label>
+      <div id="episodes-list"></div>
+      <button type="button" class="ep-add-btn" onclick="addEpisodeField()">+ Aggiungi episodio</button>
+    </div>
     <label>Immagine di copertina (opzionale)</label>
     <input id="f-cover" placeholder="https://..." />
     <label>Descrizione (opzionale)</label>
@@ -216,16 +265,47 @@
 <div class="overlay player-modal" id="player-overlay">
   <div class="modal" style="position:relative;">
     <button class="close-x" onclick="closePlayer()">×</button>
-    <video id="player-video" controls></video>
-    <div class="player-info">
-      <h3 id="player-title"></h3>
-      <p id="player-desc" style="color:var(--text-dim);font-size:14px;"></p>
+    <div class="player-body">
+      <div class="player-main">
+        <video id="player-video" controls></video>
+        <div class="player-info">
+          <h3 id="player-title"></h3>
+          <p id="player-desc" style="color:var(--text-dim);font-size:14px;"></p>
+        </div>
+      </div>
+      <div class="ep-sidebar" id="ep-sidebar" style="display:none;"></div>
     </div>
   </div>
 </div>
 
 <script>
 let library = [];
+let currentType = 'film';
+let episodeCounter = 0;
+
+function setType(type){
+  currentType = type;
+  document.getElementById('type-film').classList.toggle('active', type === 'film');
+  document.getElementById('type-serie').classList.toggle('active', type === 'serie');
+  document.getElementById('film-fields').style.display = type === 'film' ? 'block' : 'none';
+  document.getElementById('serie-fields').style.display = type === 'serie' ? 'block' : 'none';
+  if(type === 'serie' && document.getElementById('episodes-list').children.length === 0){
+    addEpisodeField();
+  }
+}
+
+function addEpisodeField(){
+  episodeCounter++;
+  const id = 'ep-' + episodeCounter;
+  const row = document.createElement('div');
+  row.className = 'ep-row';
+  row.id = id;
+  row.innerHTML = `
+    <input class="ep-title" placeholder="Es. Episodio 1" />
+    <input class="ep-video" placeholder="Link video diretto" />
+    <button type="button" class="ep-remove" onclick="document.getElementById('${id}').remove()">×</button>`;
+  document.getElementById('episodes-list').appendChild(row);
+}
 
 async function loadLibrary(){
   try{
@@ -274,8 +354,11 @@ function render(){
     card.className = 'card';
     card.style.animationDelay = (order * 0.04) + 's';
     if(item.cover) card.style.backgroundImage = `url('${item.cover}')`;
+    const previewSrc = item.type === 'film' ? item.video : (item.episodes[0] ? item.episodes[0].video : '');
+    const pill = item.type === 'serie' ? '<div class="type-pill">SERIE</div>' : '';
     card.innerHTML = `
-      <video muted loop preload="none" src="${item.video}"></video>
+      ${pill}
+      <video muted loop preload="none" src="${previewSrc}"></video>
       <div class="play-icon">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
       </div>
@@ -298,23 +381,42 @@ function escapeHtml(s){
 
 function openAddModal(){
   document.getElementById('add-overlay').classList.add('open');
+  setType('film');
+  document.getElementById('episodes-list').innerHTML = '';
 }
 function closeAddModal(){
   document.getElementById('add-overlay').classList.remove('open');
   document.getElementById('form-err').style.display = 'none';
   ['f-title','f-video','f-cover','f-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('episodes-list').innerHTML = '';
 }
 
 async function saveTitle(){
   const title = document.getElementById('f-title').value.trim();
-  const video = document.getElementById('f-video').value.trim();
   const cover = document.getElementById('f-cover').value.trim();
   const desc = document.getElementById('f-desc').value.trim();
-  if(!title || !video){
-    document.getElementById('form-err').style.display = 'block';
-    return;
+
+  if(currentType === 'film'){
+    const video = document.getElementById('f-video').value.trim();
+    if(!title || !video){
+      document.getElementById('form-err').textContent = 'Inserisci almeno titolo e link video.';
+      document.getElementById('form-err').style.display = 'block';
+      return;
+    }
+    library.push({type:'film', title, video, cover, desc});
+  } else {
+    const rows = Array.from(document.querySelectorAll('#episodes-list .ep-row'));
+    const episodes = rows.map(r => ({
+      title: r.querySelector('.ep-title').value.trim(),
+      video: r.querySelector('.ep-video').value.trim()
+    })).filter(e => e.title && e.video);
+    if(!title || episodes.length === 0){
+      document.getElementById('form-err').textContent = 'Inserisci il titolo e almeno un episodio con link video.';
+      document.getElementById('form-err').style.display = 'block';
+      return;
+    }
+    library.push({type:'serie', title, cover, desc, episodes});
   }
-  library.push({title, video, cover, desc});
   await persist();
   render();
   closeAddModal();
@@ -323,16 +425,45 @@ async function saveTitle(){
 function openPlayer(i){
   const item = library[i];
   const v = document.getElementById('player-video');
-  v.src = item.video;
-  document.getElementById('player-title').textContent = item.title;
-  document.getElementById('player-desc').textContent = item.desc || '';
+  const sidebar = document.getElementById('ep-sidebar');
+
+  if(item.type === 'film'){
+    sidebar.style.display = 'none';
+    v.src = item.video;
+    document.getElementById('player-title').textContent = item.title;
+    document.getElementById('player-desc').textContent = item.desc || '';
+  } else {
+    sidebar.style.display = 'block';
+    sidebar.innerHTML = '';
+    item.episodes.forEach((ep, epIdx) => {
+      const row = document.createElement('div');
+      row.className = 'ep-item';
+      row.textContent = ep.title;
+      row.onclick = () => playEpisode(item, epIdx);
+      sidebar.appendChild(row);
+    });
+    playEpisode(item, 0);
+  }
   document.getElementById('player-overlay').classList.add('open');
   v.play().catch(()=>{});
+}
+
+function playEpisode(item, epIdx){
+  const ep = item.episodes[epIdx];
+  const v = document.getElementById('player-video');
+  v.src = ep.video;
+  v.play().catch(()=>{});
+  document.getElementById('player-title').textContent = `${item.title} — ${ep.title}`;
+  document.getElementById('player-desc').textContent = item.desc || '';
+  document.querySelectorAll('#ep-sidebar .ep-item').forEach((el, idx) => {
+    el.classList.toggle('playing', idx === epIdx);
+  });
 }
 function closePlayer(){
   const v = document.getElementById('player-video');
   v.pause();
   v.src = '';
+  document.getElementById('ep-sidebar').innerHTML = '';
   document.getElementById('player-overlay').classList.remove('open');
 }
 
