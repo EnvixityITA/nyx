@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Nyx — la tua libreria</title>
+<style>
+  :root{
+    --bg:#0A0A0C;
+    --panel:#141417;
+    --panel-2:#1D1D21;
+    --text:#F5F5F4;
+    --text-dim:#A8A29E;
+    --accent:#6D28D9;
+    --accent-hover:#7C3AED;
+    --accent-glow:rgba(109,40,217,0.45);
+    --border:#26262A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    min-height:100vh;
+  }
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 48px;position:sticky;top:0;z-index:10;
+    background:linear-gradient(to bottom, rgba(10,10,12,0.95), rgba(10,10,12,0));
+  }
+  .logo{
+    font-family:'Arial Narrow',Arial,sans-serif;
+    font-weight:700;font-size:26px;letter-spacing:1px;
+    color:var(--accent);
+  }
+  nav{display:flex;gap:28px;font-size:14px;color:var(--text-dim);}
+  nav span{cursor:pointer;transition:color .15s;}
+  nav span:hover{color:var(--text);}
+  nav span.active{color:var(--text);position:relative;}
+  nav span.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--accent);
+  }
+  .add-btn{
+    background:var(--accent);color:#fff;border:none;padding:9px 18px;
+    border-radius:4px;font-size:14px;cursor:pointer;font-weight:600;
+    transition:background .15s, box-shadow .15s, transform .1s;
+  }
+  .add-btn:hover{background:var(--accent-hover);box-shadow:0 0 0 6px var(--accent-glow);}
+  .add-btn:active{transform:scale(0.96);}
+
+  .search-wrap{position:relative;display:flex;align-items:center;}
+  .search-wrap input{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:8px 12px 8px 34px;border-radius:20px;font-size:13px;width:180px;
+    transition:width .2s ease, border-color .2s;
+  }
+  .search-wrap input:focus{outline:none;width:240px;border-color:var(--accent);}
+  .search-wrap svg{position:absolute;left:11px;width:14px;height:14px;color:var(--text-dim);pointer-events:none;}
+
+  .hero{
+    position:relative;height:64vh;min-height:420px;
+    background-size:cover;background-position:center;
+    display:flex;align-items:flex-end;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(to top, var(--bg) 5%, rgba(10,10,12,0.1) 60%),
+               linear-gradient(to right, rgba(10,10,12,0.85) 0%, transparent 55%);
+  }
+  .hero-content{position:relative;z-index:1;padding:0 48px 56px;max-width:620px;}
+  .hero-content h1{
+    font-size:46px;font-weight:700;line-height:1.05;margin-bottom:14px;
+    animation:heroIn .5s ease;
+  }
+  .hero-content p{
+    color:var(--text-dim);font-size:15px;line-height:1.6;margin-bottom:22px;
+    animation:heroIn .5s ease .05s backwards;
+  }
+  @keyframes heroIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .hero-actions{display:flex;gap:12px;}
+  .btn-primary,.btn-secondary{
+    padding:11px 24px;border-radius:4px;font-size:15px;font-weight:600;
+    cursor:pointer;border:none;display:flex;align-items:center;gap:8px;
+  }
+  .btn-primary{background:var(--text);color:#0A0A0C;transition:transform .12s, box-shadow .12s;}
+  .btn-primary:hover{transform:scale(1.03);box-shadow:0 4px 18px rgba(0,0,0,0.4);}
+  .btn-primary:active{transform:scale(0.97);}
+  .btn-secondary{background:rgba(120,120,120,0.35);color:var(--text);transition:background .15s;}
+  .btn-secondary:hover{background:rgba(120,120,120,0.5);}
+
+  main{padding:8px 0 60px;}
+  .row{margin:34px 0;}
+  .row h2{padding:0 48px 14px;font-size:19px;font-weight:600;}
+  .row-track{display:flex;gap:12px;overflow-x:auto;padding:0 48px 8px;scrollbar-width:thin;}
+  .row-track::-webkit-scrollbar{height:6px;}
+  .row-track::-webkit-scrollbar-thumb{background:var(--panel-2);border-radius:3px;}
+  .card{
+    flex:0 0 220px;height:124px;border-radius:6px;position:relative;
+    background:var(--panel) center/cover no-repeat;cursor:pointer;
+    transition:transform .22s ease, box-shadow .22s ease;overflow:hidden;
+    opacity:0;transform:translateY(14px);
+    animation:cardIn .4s ease forwards;
+  }
+  @keyframes cardIn{to{opacity:1;transform:translateY(0);}}
+  .card:hover{transform:scale(1.08);z-index:2;box-shadow:0 10px 28px rgba(0,0,0,0.55), 0 0 0 1px var(--accent);}
+  .card video{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .card:hover video{opacity:1;}
+  .card .play-icon{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.7);
+    width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;
+  }
+  .card:hover .play-icon{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .card .badge{
+    position:absolute;bottom:0;left:0;right:0;padding:8px 10px;
+    background:linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+    font-size:13px;font-weight:600;z-index:1;
+  }
+  .empty-hint{padding:0 48px;color:var(--text-dim);font-size:14px;}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.8);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:24px;
+    opacity:0;transition:opacity .18s;
+  }
+  .overlay.open{display:flex;opacity:1;}
+  .modal{
+    background:var(--panel);border-radius:8px;width:100%;max-width:640px;
+    border:1px solid var(--border);padding:26px;
+    transform:scale(0.95);transition:transform .18s;
+  }
+  .overlay.open .modal{transform:scale(1);}
+  .modal h3{font-size:18px;margin-bottom:16px;}
+  .modal label{display:block;font-size:13px;color:var(--text-dim);margin:14px 0 6px;}
+  .modal input{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);
+    color:var(--text);padding:10px 12px;border-radius:4px;font-size:14px;
+  }
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
+  .modal-actions button{padding:9px 18px;border-radius:4px;border:none;font-size:14px;cursor:pointer;font-weight:600;transition:transform .1s;}
+  .modal-actions button:active{transform:scale(0.96);}
+  .cancel{background:transparent;color:var(--text-dim);border:1px solid var(--border) !important;}
+  .confirm{background:var(--accent);color:#fff;}
+  .confirm:hover{background:var(--accent-hover);}
+  .err{color:var(--accent);font-size:12px;margin-top:6px;display:none;}
+
+  .player-modal .modal{max-width:900px;padding:0;overflow:hidden;}
+  .player-modal video{width:100%;display:block;max-height:70vh;background:#000;}
+  .player-info{padding:18px 22px;}
+  .player-info h3{margin-bottom:6px;}
+  .close-x{
+    position:absolute;top:14px;right:18px;background:rgba(0,0,0,0.5);
+    color:#fff;border:none;width:32px;height:32px;border-radius:50%;
+    font-size:18px;cursor:pointer;z-index:2;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NYX</div>
+  <nav>
+    <span class="active">Home</span><span>La mia libreria</span><span>Categorie</span>
+  </nav>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search-input" placeholder="Cerca nella libreria" oninput="filterLibrary()" />
+    </div>
+    <button class="add-btn" onclick="openAddModal()">+ Aggiungi titolo</button>
+  </div>
+</header>
+
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <h1 id="hero-title">Costruisci la tua libreria</h1>
+    <p id="hero-desc">Aggiungi i tuoi video tramite link diretto e crea il tuo catalogo personale, organizzato come una vera piattaforma di streaming.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="openAddModal()">▶ Aggiungi il primo titolo</button>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="row">
+    <h2>La tua libreria</h2>
+    <div class="row-track" id="library-track"></div>
+    <p class="empty-hint" id="empty-hint">Non hai ancora aggiunto nessun titolo. Usa "+ Aggiungi titolo" in alto per iniziare.</p>
+  </div>
+</main>
+
+<!-- Add title modal -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <h3>Aggiungi un titolo</h3>
+    <label>Titolo</label>
+    <input id="f-title" placeholder="Es. Il mio documentario" />
+    <label>Link video diretto (mp4, webm...)</label>
+    <input id="f-video" placeholder="https://..." />
+    <label>Immagine di copertina (opzionale)</label>
+    <input id="f-cover" placeholder="https://..." />
+    <label>Descrizione (opzionale)</label>
+    <input id="f-desc" placeholder="Breve descrizione" />
+    <p class="err" id="form-err">Inserisci almeno titolo e link video.</p>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeAddModal()">Annulla</button>
+      <button class="confirm" onclick="saveTitle()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- Player modal -->
+<div class="overlay player-modal" id="player-overlay">
+  <div class="modal" style="position:relative;">
+    <button class="close-x" onclick="closePlayer()">×</button>
+    <video id="player-video" controls></video>
+    <div class="player-info">
+      <h3 id="player-title"></h3>
+      <p id="player-desc" style="color:var(--text-dim);font-size:14px;"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+let library = [];
+
+async function loadLibrary(){
+  try{
+    const res = await window.storage.get('library');
+    library = res ? JSON.parse(res.value) : [];
+  }catch(e){ library = []; }
+  render();
+}
+
+async function persist(){
+  try{ await window.storage.set('library', JSON.stringify(library)); }
+  catch(e){ console.error('Errore salvataggio', e); }
+}
+
+function render(){
+  const track = document.getElementById('library-track');
+  const hint = document.getElementById('empty-hint');
+  track.innerHTML = '';
+  if(library.length === 0){
+    hint.style.display = 'block';
+    document.getElementById('hero-title').textContent = 'Costruisci la tua libreria';
+    document.getElementById('hero-desc').textContent = 'Aggiungi i tuoi video tramite link diretto e crea il tuo catalogo personale, organizzato come una vera piattaforma di streaming.';
+    return;
+  }
+  hint.style.display = 'none';
+  const last = library[library.length-1];
+  document.getElementById('hero').style.backgroundImage = last.cover ? `url('${last.cover}')` : 'none';
+  document.getElementById('hero-title').textContent = last.title;
+  document.getElementById('hero-desc').textContent = last.desc || 'Aggiunto alla tua libreria.';
+
+  const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+  const filtered = library
+    .map((item, idx) => ({item, idx}))
+    .filter(({item}) => item.title.toLowerCase().includes(query));
+
+  if(query && filtered.length === 0){
+    hint.style.display = 'block';
+    hint.textContent = 'Nessun titolo corrisponde alla ricerca.';
+    return;
+  } else {
+    hint.style.display = 'none';
+  }
+
+  filtered.forEach(({item, idx}, order) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.animationDelay = (order * 0.04) + 's';
+    if(item.cover) card.style.backgroundImage = `url('${item.cover}')`;
+    card.innerHTML = `
+      <video muted loop preload="none" src="${item.video}"></video>
+      <div class="play-icon">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="badge">${escapeHtml(item.title)}</div>`;
+    const previewVideo = card.querySelector('video');
+    card.addEventListener('mouseenter', () => { previewVideo.currentTime = 0; previewVideo.play().catch(()=>{}); });
+    card.addEventListener('mouseleave', () => { previewVideo.pause(); });
+    card.onclick = () => openPlayer(idx);
+    track.appendChild(card);
+  });
+}
+
+function filterLibrary(){ render(); }
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function openAddModal(){
+  document.getElementById('add-overlay').classList.add('open');
+}
+function closeAddModal(){
+  document.getElementById('add-overlay').classList.remove('open');
+  document.getElementById('form-err').style.display = 'none';
+  ['f-title','f-video','f-cover','f-desc'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function saveTitle(){
+  const title = document.getElementById('f-title').value.trim();
+  const video = document.getElementById('f-video').value.trim();
+  const cover = document.getElementById('f-cover').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  if(!title || !video){
+    document.getElementById('form-err').style.display = 'block';
+    return;
+  }
+  library.push({title, video, cover, desc});
+  await persist();
+  render();
+  closeAddModal();
+}
+
+function openPlayer(i){
+  const item = library[i];
+  const v = document.getElementById('player-video');
+  v.src = item.video;
+  document.getElementById('player-title').textContent = item.title;
+  document.getElementById('player-desc').textContent = item.desc || '';
+  document.getElementById('player-overlay').classList.add('open');
+  v.play().catch(()=>{});
+}
+function closePlayer(){
+  const v = document.getElementById('player-video');
+  v.pause();
+  v.src = '';
+  document.getElementById('player-overlay').classList.remove('open');
+}
+
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', (e) => {
+    if(e.target === ov){
+      if(ov.id === 'add-overlay') closeAddModal();
+      if(ov.id === 'player-overlay') closePlayer();
+    }
+  });
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){
+    if(document.getElementById('add-overlay').classList.contains('open')) closeAddModal();
+    if(document.getElementById('player-overlay').classList.contains('open')) closePlayer();
+  }
+});
+document.querySelectorAll('nav span').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('nav span').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  });
+});
+
+loadLibrary();
+</script>
+</body>
+</html>
