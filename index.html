@@ -114,6 +114,22 @@
     opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;
   }
   .card:hover .play-icon{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .card .delete-btn{
+    position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;
+    background:rgba(0,0,0,0.6);border:none;color:var(--text);font-size:14px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    opacity:0;transition:opacity .15s, background .15s;z-index:2;
+  }
+  .card:hover .delete-btn{opacity:1;}
+  .card .delete-btn:hover{background:var(--accent);}
+  .card .edit-btn{
+    position:absolute;top:6px;right:34px;width:24px;height:24px;border-radius:50%;
+    background:rgba(0,0,0,0.6);border:none;color:var(--text);font-size:12px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    opacity:0;transition:opacity .15s, background .15s;z-index:2;
+  }
+  .card:hover .edit-btn{opacity:1;}
+  .card .edit-btn:hover{background:var(--accent);}
   .card .badge{
     position:absolute;bottom:0;left:0;right:0;padding:8px 10px;
     background:linear-gradient(to top, rgba(0,0,0,0.85), transparent);
@@ -232,7 +248,7 @@
 <!-- Add title modal -->
 <div class="overlay" id="add-overlay">
   <div class="modal">
-    <h3>Aggiungi un titolo</h3>
+    <h3 id="modal-heading">Aggiungi un titolo</h3>
     <label>Tipo</label>
     <div class="type-toggle">
       <button type="button" class="type-btn active" id="type-film" onclick="setType('film')">Film</button>
@@ -256,7 +272,19 @@
     <p class="err" id="form-err">Inserisci almeno titolo e link video.</p>
     <div class="modal-actions">
       <button class="cancel" onclick="closeAddModal()">Annulla</button>
-      <button class="confirm" onclick="saveTitle()">Salva</button>
+      <button class="confirm" id="save-btn" onclick="saveTitle()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="overlay" id="delete-overlay">
+  <div class="modal" style="max-width:400px;">
+    <h3>Eliminare questo titolo?</h3>
+    <p style="color:var(--text-dim);font-size:14px;margin-top:6px;">L'azione non può essere annullata.</p>
+    <div class="modal-actions">
+      <button class="cancel" onclick="cancelDelete()">Annulla</button>
+      <button class="confirm" onclick="confirmDelete()">Elimina</button>
     </div>
   </div>
 </div>
@@ -307,17 +335,54 @@ function addEpisodeField(){
   document.getElementById('episodes-list').appendChild(row);
 }
 
+const STORAGE_KEY = 'nyx_library';
+let storageMode = null; // 'claude' or 'local'
+
+async function detectStorageMode(){
+  if(window.storage && typeof window.storage.get === 'function'){
+    try{
+      await window.storage.set('nyx_probe', '1');
+      storageMode = 'claude';
+      return;
+    }catch(e){ /* fall through to local */ }
+  }
+  storageMode = 'local';
+}
+
 async function loadLibrary(){
+  await detectStorageMode();
   try{
-    const res = await window.storage.get('library');
-    library = res ? JSON.parse(res.value) : [];
-  }catch(e){ library = []; }
+    if(storageMode === 'claude'){
+      const res = await window.storage.get('library');
+      library = res ? JSON.parse(res.value) : [];
+    } else {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      library = raw ? JSON.parse(raw) : [];
+    }
+  }catch(e){
+    library = [];
+    if(!(e && e.message && e.message.includes('not found'))){
+      showStorageWarning();
+    }
+  }
   render();
 }
 
+function showStorageWarning(){
+  const w = document.createElement('div');
+  w.style.cssText = 'background:#452b0a;color:#f5d9a8;padding:10px 48px;font-size:13px;text-align:center;';
+  w.textContent = 'Il salvataggio non è disponibile in questa modalità di visualizzazione: apri il file dall\'anteprima di Claude in chat, non come file scaricato sul computer, per far funzionare il salvataggio permanente.';
+  document.body.insertBefore(w, document.body.firstChild);
+}
+
 async function persist(){
-  try{ await window.storage.set('library', JSON.stringify(library)); }
-  catch(e){ console.error('Errore salvataggio', e); }
+  try{
+    if(storageMode === 'claude'){
+      await window.storage.set('library', JSON.stringify(library));
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
+    }
+  }catch(e){ console.error('Errore salvataggio', e); showStorageWarning(); }
 }
 
 function render(){
@@ -358,6 +423,8 @@ function render(){
     const pill = item.type === 'serie' ? '<div class="type-pill">SERIE</div>' : '';
     card.innerHTML = `
       ${pill}
+      <button class="edit-btn" aria-label="Modifica titolo" onclick="openEditModal(event, ${idx})"><i>✎</i></button>
+      <button class="delete-btn" aria-label="Elimina titolo" onclick="requestDelete(event, ${idx})">×</button>
       <video muted loop preload="none" src="${previewSrc}"></video>
       <div class="play-icon">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
@@ -379,12 +446,50 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
+let editingIndex = null;
+
 function openAddModal(){
+  editingIndex = null;
+  document.getElementById('modal-heading').textContent = 'Aggiungi un titolo';
+  document.getElementById('save-btn').textContent = 'Salva';
   document.getElementById('add-overlay').classList.add('open');
   setType('film');
   document.getElementById('episodes-list').innerHTML = '';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-video').value = '';
+  document.getElementById('f-cover').value = '';
+  document.getElementById('f-desc').value = '';
 }
+
+function openEditModal(event, idx){
+  event.stopPropagation();
+  editingIndex = idx;
+  const item = library[idx];
+  document.getElementById('modal-heading').textContent = 'Modifica titolo';
+  document.getElementById('save-btn').textContent = 'Salva modifiche';
+  document.getElementById('form-err').style.display = 'none';
+  document.getElementById('add-overlay').classList.add('open');
+  setType(item.type);
+  document.getElementById('f-title').value = item.title;
+  document.getElementById('f-cover').value = item.cover || '';
+  document.getElementById('f-desc').value = item.desc || '';
+  document.getElementById('episodes-list').innerHTML = '';
+  if(item.type === 'film'){
+    document.getElementById('f-video').value = item.video;
+  } else {
+    document.getElementById('f-video').value = '';
+    item.episodes.forEach(ep => {
+      addEpisodeField();
+      const rows = document.querySelectorAll('#episodes-list .ep-row');
+      const last = rows[rows.length - 1];
+      last.querySelector('.ep-title').value = ep.title;
+      last.querySelector('.ep-video').value = ep.video;
+    });
+  }
+}
+
 function closeAddModal(){
+  editingIndex = null;
   document.getElementById('add-overlay').classList.remove('open');
   document.getElementById('form-err').style.display = 'none';
   ['f-title','f-video','f-cover','f-desc'].forEach(id => document.getElementById(id).value = '');
@@ -396,6 +501,7 @@ async function saveTitle(){
   const cover = document.getElementById('f-cover').value.trim();
   const desc = document.getElementById('f-desc').value.trim();
 
+  let newItem;
   if(currentType === 'film'){
     const video = document.getElementById('f-video').value.trim();
     if(!title || !video){
@@ -403,7 +509,7 @@ async function saveTitle(){
       document.getElementById('form-err').style.display = 'block';
       return;
     }
-    library.push({type:'film', title, video, cover, desc});
+    newItem = {type:'film', title, video, cover, desc};
   } else {
     const rows = Array.from(document.querySelectorAll('#episodes-list .ep-row'));
     const episodes = rows.map(r => ({
@@ -415,11 +521,37 @@ async function saveTitle(){
       document.getElementById('form-err').style.display = 'block';
       return;
     }
-    library.push({type:'serie', title, cover, desc, episodes});
+    newItem = {type:'serie', title, cover, desc, episodes};
+  }
+
+  if(editingIndex !== null){
+    library[editingIndex] = newItem;
+  } else {
+    library.push(newItem);
   }
   await persist();
   render();
   closeAddModal();
+}
+
+let pendingDeleteIdx = null;
+
+function requestDelete(event, idx){
+  event.stopPropagation();
+  pendingDeleteIdx = idx;
+  document.getElementById('delete-overlay').classList.add('open');
+}
+function cancelDelete(){
+  pendingDeleteIdx = null;
+  document.getElementById('delete-overlay').classList.remove('open');
+}
+async function confirmDelete(){
+  if(pendingDeleteIdx !== null){
+    library.splice(pendingDeleteIdx, 1);
+    await persist();
+    render();
+  }
+  cancelDelete();
 }
 
 function openPlayer(i){
@@ -472,6 +604,7 @@ document.querySelectorAll('.overlay').forEach(ov => {
     if(e.target === ov){
       if(ov.id === 'add-overlay') closeAddModal();
       if(ov.id === 'player-overlay') closePlayer();
+      if(ov.id === 'delete-overlay') cancelDelete();
     }
   });
 });
@@ -479,6 +612,7 @@ document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
     if(document.getElementById('add-overlay').classList.contains('open')) closeAddModal();
     if(document.getElementById('player-overlay').classList.contains('open')) closePlayer();
+    if(document.getElementById('delete-overlay').classList.contains('open')) cancelDelete();
   }
 });
 document.querySelectorAll('nav span').forEach(el => {
