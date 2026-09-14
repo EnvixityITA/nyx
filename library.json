@@ -23,13 +23,13 @@
     "type": "serie",
     "title": "Made in Abyss : The Golden City of the Scorching Sun",
     "cover": "https://preview.redd.it/made-in-abyss-season-2-new-key-visual-v0-7pwpne51m0r81.jpg?auto=webp&s=c8bf45ced33357ad57e7b88da4ffea8bdbe2fce1",
-    "desc": "Una ragazza e il suo compagno robot cercano sua madre che si è persa in un vasto abisso incentrato nel mezzo della loro città natale.",
+    "desc": "Dopo gli eventi del film Dawn of the Deep Soul, Riko, Reg e Nanachi raggiungono il sesto strato, un punto di non ritorno noto come la Capitale del Non Ritorno. Qui scoprono Ilblu, un grottesco e affascinante villaggio abitato da creature nate dal desiderio e dal sacrificio. La trama intreccia la spedizione attuale con la tragica storia della brigata Ganja, arrivata nello stesso luogo secoli prima, svelando le origini oscure del villaggio e affrontando temi estremi di valore, perdita e devozione.",
     "genre": "Avventura",
     "year": 2025,
     "episodes": [
       {
         "title": "Episodio 1: La bussola indicava le tenebre",
-        "video": "drive:1H3k1cq_YQIbepL48GIkxRUYiIqX6M2qj"
+        "video": "drive:19m7c3hOahP4_s9QRqoZaV49UWvtQRwTb"
       },
       {
         "title": "Episodio 2: La capitale del non ritorno",
@@ -54,6 +54,19 @@
       {
         "title": "Episodio 7: La culla delle brame",
         "video": "drive:1L6x-ohjjK3LCVZ2ojNYfdChY5SW4p1ix"
+      },
+      {
+    "type": "serie",
+    "title": "Made in Abyss",
+    "cover": "https://preview.redd.it/made-in-abyss-season-2-new-key-visual-v0-7pwpne51m0r81.jpg?auto=webp&s=c8bf45ced33357ad57e7b88da4ffea8bdbe2fce1",
+    "desc": "Riko, una giovane orfana, sogna di esplorare l'Abisso, una gigantesca voragine inesplorata e ricca di misteri, reperti e creature pericolose. Dopo aver trovato Reg, un ragazzo-robot senza memoria nato nelle profondità dell'Abisso, i due intraprendono un viaggio senza ritorno verso il fondo per cercare la madre di Riko. Sotto un'estetica fiabesca, la stagione rivela presto una natura spietata, mostrando gli orrori e la dolorosa Maledizione dell'Abisso che colpisce chiunque provi a risalire.",
+    "genre": "Avventura",
+    "year": 2025,
+    "episodes": [
+      {
+        "title": "Episodio 1: La Città della Voragine",
+        "video": "drive:1H3k1cq_YQIbepL48GIkxRUYiIqX6M2qj"
+      }
       }
     ]
   }
