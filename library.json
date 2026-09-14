@@ -31,6 +31,44 @@
   },
   {
     "type": "serie",
+    "title": "Puella Magi Madoka Magica",
+    "cover": "https://m.media-amazon.com/images/I/81XQynW684L._AC_UF1000,1000_QL80_.jpg",
+    "desc": "Una creatura di nome Kyubey esprime a Madoka e Sayaka un desiderio se accettano di diventare ragazze magiche e combattere esseri astratti chiamati streghe.",
+    "genre": "Anime",
+    "year": 2011,
+    "episodes": [
+      {
+        "title": "Episodio 1: È come se l'avessi vista in un sogno...",
+        "video": "drive:1sZ4vbjsoxdgsEAdrsjQIGW_yx1tII1_f"
+      },
+      {
+        "title": "Episodio 2: Pensavo sarebbe stato bello",
+        "video": "drive:1bY0vf0ryaAPo8wrQ00aZ7Fncja7sVgL3"
+      },
+      {
+        "title": "Episodio 3: Ormai non ho più paura di nulla",
+        "video": "drive:10kFtMyrVLJ-NJrld9MQ2bqaE1Y42xv5P"
+      },
+      {
+        "title": "Episodio 4: I miracoli e magie esistono",
+        "video": "drive:1k5byi5Anw9IGNry4Lo1BDqrazVk8K2qe"
+      },
+      {
+        "title": "Episodio 5: Io non ho alcun rimpianto",
+        "video": "drive:16b6i5Jiisv8tisHCfOM-2rEEjievUHvx"
+      },
+      {
+        "title": "Episodio 6: Non è per niente giusto tutto questo",
+        "video": "drive:1JNLHZ2OFbeHMRkx7_4Wwr6_xZh4bM315"
+      },
+      {
+        "title": "Episodio 7: Sai affrontare a volto aperto i tuoi veri sentimenti?",
+        "video": "drive:1UjpUVulEG6zZiSBd1qIsgEJnMFPee--s"
+      }
+    ]
+  },
+  {
+    "type": "serie",
     "title": "Made in Abyss : The Golden City of the Scorching Sun",
     "cover": "https://preview.redd.it/made-in-abyss-season-2-new-key-visual-v0-7pwpne51m0r81.jpg?auto=webp&s=c8bf45ced33357ad57e7b88da4ffea8bdbe2fce1",
     "desc": "Dopo gli eventi del film Dawn of the Deep Soul, Riko, Reg e Nanachi raggiungono il sesto strato, un punto di non ritorno noto come la Capitale del Non Ritorno. Qui scoprono Ilblu, un grottesco e affascinante villaggio abitato da creature nate dal desiderio e dal sacrificio. La trama intreccia la spedizione attuale con la tragica storia della brigata Ganja, arrivata nello stesso luogo secoli prima, svelando le origini oscure del villaggio e affrontando temi estremi di valore, perdita e devozione.",
