@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nyx</title>
+<title>Nyx — la tua libreria</title>
 <style>
   :root{
     --bg:#0A0A0C;
@@ -115,6 +115,32 @@
   }
   .search-wrap input:focus{outline:none;width:250px;border-color:var(--accent);background:var(--panel-3);}
   .search-wrap svg{position:absolute;left:12px;width:14px;height:14px;color:var(--text-dim);pointer-events:none;}
+  .search-wrap mark{background:var(--accent-glow-soft);color:var(--accent-soft);border-radius:2px;padding:0 1px;}
+
+  /* ---------- Filter bar ---------- */
+  .filter-bar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:0 48px 22px;position:relative;z-index:1;
+  }
+  .filter-chip{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text-dim);
+    padding:7px 15px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:all .18s;white-space:nowrap;
+  }
+  .filter-chip:hover{color:var(--text);border-color:var(--text-dim);}
+  .filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 14px -4px var(--accent-glow);}
+  .filter-bar .sort-wrap{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .filter-bar .sort-wrap label{font-size:12px;color:var(--text-faint);font-weight:600;}
+  .sort-select{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .sort-select:focus{outline:none;border-color:var(--accent);background:var(--panel-3);}
+  @media (max-width:720px){
+    .filter-bar{padding-left:20px;padding-right:20px;}
+    .filter-bar .sort-wrap{margin-left:0;width:100%;}
+  }
 
   /* ---------- Hero ---------- */
   .hero{
@@ -231,6 +257,8 @@
     background:rgba(124,58,237,0.16);border:1px solid rgba(124,58,237,0.3);
     padding:2px 7px;border-radius:20px;margin-top:5px;font-weight:600;
   }
+  .card .resume-tag .pct{color:var(--text-faint);font-weight:700;}
+  .card mark{background:var(--accent-glow-soft);color:var(--accent-soft);border-radius:2px;padding:0 1px;}
   .card .icon-btn{
     position:absolute;top:8px;width:26px;height:26px;border-radius:50%;
     background:rgba(0,0,0,0.6);border:none;color:var(--text);font-size:13px;
@@ -374,6 +402,16 @@
     width:100vw;height:100vh;
     display:flex;align-items:center;justify-content:center;
     background:#000;
+    animation:fsEnter .45s var(--ease-out);
+  }
+  @keyframes fsEnter{
+    0%{opacity:0.4;transform:scale(0.92);}
+    100%{opacity:1;transform:scale(1);}
+  }
+  .video-frame.fs-exit{animation:fsExit .35s var(--ease-out);}
+  @keyframes fsExit{
+    0%{opacity:1;transform:scale(1);}
+    100%{opacity:0.5;transform:scale(0.96);}
   }
   .video-frame:fullscreen video,
   .video-frame:-webkit-full-screen video{
@@ -543,6 +581,36 @@
   .nu-cancel{background:rgba(255,255,255,0.1);color:var(--text-dim);border:none;border-radius:7px;width:36px;cursor:pointer;transition:background .15s;}
   .nu-cancel:hover{background:rgba(255,255,255,0.18);color:var(--text);}
 
+  /* ---------- Title detail panel ---------- */
+  .detail-modal{max-width:780px;padding:0;overflow:hidden;}
+  .detail-hero{
+    position:relative;height:340px;background-size:cover;background-position:center;
+    display:flex;align-items:flex-end;
+  }
+  .detail-hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(to top, var(--panel) 4%, rgba(22,22,26,0.35) 55%, rgba(22,22,26,0.1) 80%);
+  }
+  .detail-hero .close-x{top:16px;right:16px;}
+  .detail-body{padding:8px 32px 30px;position:relative;z-index:1;}
+  .detail-title{font-size:28px;font-weight:800;letter-spacing:-.4px;margin-bottom:10px;}
+  .detail-meta-row{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;
+    font-size:13px;color:var(--text-dim);font-weight:600;
+  }
+  .detail-meta-row .dot{width:3px;height:3px;border-radius:50%;background:var(--text-faint);}
+  .detail-genre-tag{
+    background:var(--panel-3);color:var(--text-dim);padding:3px 10px;border-radius:14px;
+    font-size:11.5px;font-weight:600;
+  }
+  .detail-desc{color:var(--text-dim);font-size:14.5px;line-height:1.7;max-width:600px;margin-bottom:24px;}
+  .detail-actions{display:flex;gap:12px;}
+  @media (max-width:720px){
+    .detail-hero{height:220px;}
+    .detail-body{padding:8px 20px 24px;}
+    .detail-title{font-size:22px;}
+  }
+
   ::-webkit-scrollbar{width:9px;}
   ::-webkit-scrollbar-track{background:transparent;}
   ::-webkit-scrollbar-thumb{background:var(--panel-3);border-radius:5px;}
@@ -569,7 +637,7 @@
   <div style="display:flex;align-items:center;gap:14px;">
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="search-input" placeholder="Cerca nella libreria" oninput="filterLibrary()" />
+      <input id="search-input" placeholder="Cerca per titolo o descrizione" oninput="filterLibrary()" />
     </div>
   </div>
 </header>
@@ -585,6 +653,18 @@
     <div class="hero-actions" id="hero-actions"></div>
   </div>
 </section>
+
+<div class="filter-bar" id="filter-bar" style="display:none;">
+  <div id="genre-chips" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+  <div class="sort-wrap">
+    <label for="sort-select">Ordina</label>
+    <select class="sort-select" id="sort-select" onchange="render()">
+      <option value="recent">Aggiunti di recente</option>
+      <option value="az">A-Z</option>
+      <option value="favorites">Preferiti prima</option>
+    </select>
+  </div>
+</div>
 
 <main>
   <div id="skeleton-wrap">
@@ -704,6 +784,26 @@
   </div>
 </div>
 
+<!-- Title detail modal -->
+<div class="overlay" id="detail-overlay">
+  <div class="modal detail-modal" style="position:relative;">
+    <div class="detail-hero" id="detail-hero">
+      <button class="close-x" onclick="closeDetail()">×</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-title" id="detail-title"></div>
+      <div class="detail-meta-row" id="detail-meta-row"></div>
+      <p class="detail-desc" id="detail-desc"></p>
+      <div class="detail-actions">
+        <button class="btn-primary" id="detail-play-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Riproduci</button>
+        <button class="btn-secondary" id="detail-fav-btn"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
@@ -776,6 +876,52 @@ async function persist(){
   console.info('Modifica della libreria disabilitata: aggiorna library.json direttamente su GitHub.');
 }
 
+/* ---------------- Filters & sort state ---------------- */
+let activeGenre = null;
+
+function allGenres(){
+  const set = new Set();
+  library.forEach(item => { if(item.genre) set.add(item.genre); });
+  return Array.from(set).sort((a,b) => a.localeCompare(b));
+}
+
+function renderGenreChips(){
+  const bar = document.getElementById('filter-bar');
+  const wrap = document.getElementById('genre-chips');
+  const genres = allGenres();
+  if(genres.length === 0){ bar.style.display = library.length ? 'flex' : 'none'; wrap.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  wrap.innerHTML = `<button class="filter-chip${activeGenre===null?' active':''}" onclick="setGenreFilter(null)">Tutti</button>` +
+    genres.map(g => `<button class="filter-chip${activeGenre===g?' active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')">${escapeHtml(g)}</button>`).join('');
+}
+
+function setGenreFilter(g){
+  activeGenre = g;
+  renderGenreChips();
+  render();
+}
+
+function sortItems(pairs){
+  const mode = document.getElementById('sort-select')?.value || 'recent';
+  const arr = pairs.slice();
+  if(mode === 'az'){
+    arr.sort((a,b) => a.item.title.localeCompare(b.item.title));
+  } else if(mode === 'favorites'){
+    arr.sort((a,b) => (b.item.favorite?1:0) - (a.item.favorite?1:0) || b.idx - a.idx);
+  } else {
+    arr.sort((a,b) => b.idx - a.idx);
+  }
+  return arr;
+}
+
+function highlightMatch(text, query){
+  if(!query) return escapeHtml(text || '');
+  const safe = escapeHtml(text || '');
+  const q = escapeHtml(query);
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'ig');
+  return safe.replace(re, '<mark>$1</mark>');
+}
+
 /* ---------------- Render ---------------- */
 function render(){
   const track = document.getElementById('library-track');
@@ -788,6 +934,7 @@ function render(){
     hint.textContent = 'Nessun titolo nella libreria al momento.';
     document.getElementById('continue-row').style.display = 'none';
     document.getElementById('favorites-row').style.display = 'none';
+    document.getElementById('filter-bar').style.display = 'none';
     document.getElementById('hero').style.backgroundImage = 'none';
     document.getElementById('hero-title').textContent = 'Nyx';
     document.getElementById('hero-desc').textContent = 'La libreria verrà aggiornata a breve.';
@@ -795,14 +942,21 @@ function render(){
     return;
   }
 
-  const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-  const filtered = library
-    .map((item, idx) => ({item, idx}))
-    .filter(({item}) => item.title.toLowerCase().includes(query));
+  renderGenreChips();
 
-  if(query && filtered.length === 0){
+  const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+  let filtered = library
+    .map((item, idx) => ({item, idx}))
+    .filter(({item}) => {
+      const matchesQuery = !query || item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query);
+      const matchesGenre = !activeGenre || item.genre === activeGenre;
+      return matchesQuery && matchesGenre;
+    });
+  filtered = sortItems(filtered);
+
+  if(filtered.length === 0){
     hint.style.display = 'block';
-    hint.textContent = 'Nessun titolo corrisponde alla ricerca.';
+    hint.textContent = query ? 'Nessun titolo corrisponde alla ricerca.' : 'Nessun titolo corrisponde al filtro selezionato.';
     document.getElementById('continue-row').style.display = 'none';
     document.getElementById('favorites-row').style.display = 'none';
     return;
@@ -824,7 +978,7 @@ function render(){
   renderFavorites();
 
   filtered.forEach(({item, idx}, order) => {
-    track.appendChild(buildCard(item, idx, order));
+    track.appendChild(buildCard(item, idx, order, false, query));
   });
 }
 
@@ -837,7 +991,7 @@ function renderContinueWatching(){
   if(items.length === 0){ row.style.display = 'none'; return; }
   row.style.display = 'block';
   track.innerHTML = '';
-  items.forEach(({item, idx}, order) => track.appendChild(buildCard(item, idx, order, true)));
+  items.forEach(({item, idx}, order) => track.appendChild(buildCard(item, idx, order, true, null)));
 }
 
 function renderFavorites(){
@@ -852,7 +1006,7 @@ function renderFavorites(){
   items.forEach(({item, idx}, order) => track.appendChild(buildCard(item, idx, order)));
 }
 
-function buildCard(item, idx, order, isContinue){
+function buildCard(item, idx, order, isContinue, query){
   const card = document.createElement('div');
   card.className = 'card' + (item.type === 'serie' ? ' has-pill' : '');
   card.style.animationDelay = (order * 0.045) + 's';
@@ -865,17 +1019,23 @@ function buildCard(item, idx, order, isContinue){
     const epIdx = (item.progress && typeof item.progress.epIdx === 'number') ? item.progress.epIdx : 0;
     const ep = item.episodes[epIdx] || item.episodes[0];
     previewSrc = ep ? ep.video : '';
-    if(isContinue && ep) resumeLabel = `<div class="resume-tag">▶ Riprendi: ${escapeHtml(ep.title)}</div>`;
+    if(isContinue && ep){
+      const pct = (item.progress && item.progress.duration) ? Math.min(100, Math.round((item.progress.time / item.progress.duration) * 100)) : 0;
+      resumeLabel = `<div class="resume-tag">▶ Riprendi: ${escapeHtml(ep.title)} <span class="pct">${pct}%</span></div>`;
+    }
   }
 
   const pill = item.type === 'serie' ? '<div class="type-pill">SERIE</div>' : '';
-  const desc = item.desc ? `<div class="card-desc">${escapeHtml(item.desc)}</div>` : '';
+  const titleHtml = query ? highlightMatch(item.title, query) : escapeHtml(item.title);
+  const descHtml = item.desc ? (query ? highlightMatch(item.desc, query) : escapeHtml(item.desc)) : '';
+  const desc = item.desc ? `<div class="card-desc">${descHtml}</div>` : '';
   const favActive = item.favorite ? ' active' : '';
 
   let progressBar = '';
   if(item.progress && item.progress.duration){
     const pct = Math.min(100, Math.round((item.progress.time / item.progress.duration) * 100));
     progressBar = `<div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+    if(!isContinue) resumeLabel = `<div class="resume-tag"><span class="pct">${pct}% visto</span></div>`;
   }
 
   card.innerHTML = `
@@ -888,7 +1048,7 @@ function buildCard(item, idx, order, isContinue){
       <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
     </div>
     <div class="card-meta">
-      <div class="badge">${escapeHtml(item.title)}</div>
+      <div class="badge">${titleHtml}</div>
       ${desc}
       ${resumeLabel}
     </div>
@@ -914,7 +1074,7 @@ function buildCard(item, idx, order, isContinue){
     card.style.transform = 'scale(0.96)';
     requestAnimationFrame(() => {
       setTimeout(() => {
-        openPlayer(idx, card);
+        openDetail(idx);
         card.style.transform = '';
         card.classList.remove('card-pressed');
       }, 90);
@@ -985,6 +1145,46 @@ function fmtTime(t){
 }
 
 let openedFromRect = null;
+let detailIdx = null;
+
+/* ---------------- Title detail panel ---------------- */
+function openDetail(idx){
+  detailIdx = idx;
+  const item = library[idx];
+  const overlay = document.getElementById('detail-overlay');
+  document.getElementById('detail-hero').style.backgroundImage = item.cover ? `url('${item.cover}')` : 'none';
+  document.getElementById('detail-title').textContent = item.title;
+  document.getElementById('detail-desc').textContent = item.desc || '';
+
+  const metaParts = [];
+  if(item.year) metaParts.push(escapeHtml(String(item.year)));
+  if(item.genre) metaParts.push(`<span class="detail-genre-tag">${escapeHtml(item.genre)}</span>`);
+  if(item.duration) metaParts.push(escapeHtml(item.duration));
+  metaParts.push(item.type === 'serie' ? `${(item.episodes||[]).length} episodi` : 'Film');
+  document.getElementById('detail-meta-row').innerHTML = metaParts.map(p => p.startsWith('<') ? p : `<span>${p}</span>`).join('<span class="dot"></span>');
+
+  const favBtn = document.getElementById('detail-fav-btn');
+  favBtn.innerHTML = item.favorite ? '★ Nei preferiti' : '☆ Aggiungi ai preferiti';
+  favBtn.onclick = () => {
+    item.favorite = !item.favorite;
+    persist();
+    favBtn.innerHTML = item.favorite ? '★ Nei preferiti' : '☆ Aggiungi ai preferiti';
+    render();
+    showToast(item.favorite ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti');
+  };
+
+  document.getElementById('detail-play-btn').onclick = () => {
+    closeDetail();
+    openPlayer(idx);
+  };
+
+  overlay.classList.add('open');
+}
+
+function closeDetail(){
+  document.getElementById('detail-overlay').classList.remove('open');
+  detailIdx = null;
+}
 
 function openPlayer(i, cardEl){
   curIdx = i;
@@ -1378,7 +1578,11 @@ document.getElementById('speed-select').addEventListener('change', (e) => {
 document.getElementById('fullscreen-btn').onclick = () => {
   const frame = document.getElementById('video-frame');
   if(!document.fullscreenElement) frame.requestFullscreen?.();
-  else document.exitFullscreen?.();
+  else {
+    frame.classList.add('fs-exit');
+    document.exitFullscreen?.();
+    setTimeout(() => frame.classList.remove('fs-exit'), 350);
+  }
 };
 const EXPAND_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
 const COLLAPSE_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3v4a1 1 0 0 1-1 1H4M20 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M15 21v-4a1 1 0 0 1 1-1h4"/></svg>';
@@ -1421,12 +1625,14 @@ document.querySelectorAll('.overlay').forEach(ov => {
   ov.addEventListener('click', (e) => {
     if(e.target === ov){
       if(ov.id === 'player-overlay') closePlayer();
+      if(ov.id === 'detail-overlay') closeDetail();
     }
   });
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
     if(document.getElementById('player-overlay').classList.contains('open')) closePlayer();
+    else if(document.getElementById('detail-overlay').classList.contains('open')) closeDetail();
   }
 });
 function moveNavPill(el){
