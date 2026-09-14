@@ -11,6 +11,36 @@
   },
   {
     "type": "film",
+    "title": "Il film Pokémon - Hoopa e lo scontro epocale",
+    "video": "drive:1E7gQpmOeaDTfoL_AYcN1sfUwH37nnXBP",
+    "cover": "https://upload.wikimedia.org/wikipedia/it/b/bd/Puella_Magi_Madoka_Magica_-_Parte_3_-_La_storia_della_ribellione.jpg?utm_source=it.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "desc": "Ash, Pikachu e i loro amici incontrano il misterioso Pokémon Hoopa. Al piccolo Pokémon piace usare il suo talento per fare scherzi innocui alle persone. Quando il suo vero potere viene sprigionato, perde il controllo e diventa la terrificante Hoopa Unbound.",
+    "genre": "Anime",
+    "year": 2015,
+    "duration": "1h 19m"
+  },
+  {
+    "type": "film",
+    "title": "Il castello errante di Howl",
+    "video": "drive:1ERbtf581qCQolLydpT3eS-DonS_ifTNc",
+    "cover": "https://upload.wikimedia.org/wikipedia/it/b/bd/Puella_Magi_Madoka_Magica_-_Parte_3_-_La_storia_della_ribellione.jpg?utm_source=it.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "desc": "Proveniente da una vita felice, Madoka si trasforma in un essere superiore che guida le maghette, salvandole dalla disperazione. Il loro sacrificio spezza il ciclo del destino crudele che le teneva legate, liberandole dalla tragedia.",
+    "genre": "Anime",
+    "year": 2013,
+    "duration": "1h 56m"
+  },
+  {
+    "type": "film",
+    "title": "Il mio vicino Totoro",
+    "video": "drive:1kYWbn8qoRhBtPskz0lOSWOkiVNV1ruVu",
+    "cover": "https://upload.wikimedia.org/wikipedia/it/b/bd/Puella_Magi_Madoka_Magica_-_Parte_3_-_La_storia_della_ribellione.jpg?utm_source=it.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "desc": "Quando due ragazze si trasferiscono in campagna per stare vicine alla madre malata, vivono delle avventure con i meravigliosi spiriti della foresta che dimorano nelle vicinanze.",
+    "genre": "Anime",
+    "year": 2013,
+    "duration": "1h 56m"
+  },
+  {
+    "type": "film",
     "title": "Made in Abyss: The Movie - Dawn of the Deep Soul",
     "video": "drive:14wVosLdyW6y4N6Tb2ZUQAgZY4ZX-Dyvl",
     "cover": "https://images.everyeye.it/img-screenshot/made-abyss-dawn-of-the-deep-soul-v1-758234.jpg",
