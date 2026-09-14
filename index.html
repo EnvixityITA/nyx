@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nyx — la tua libreria</title>
+<title>Nyx</title>
 <style>
   :root{
     --bg:#0A0A0C;
@@ -571,10 +571,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="search-input" placeholder="Cerca nella libreria" oninput="filterLibrary()" />
     </div>
-    <button class="add-btn" onclick="openAddModal()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Aggiungi titolo
-    </button>
   </div>
 </header>
 
@@ -586,12 +582,7 @@
     </div>
     <h1 id="hero-title">Costruisci la tua libreria</h1>
     <p id="hero-desc">Aggiungi i tuoi video tramite link diretto e crea il tuo catalogo personale, organizzato come una vera piattaforma di streaming.</p>
-    <div class="hero-actions" id="hero-actions">
-      <button class="btn-primary" onclick="openAddModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        Aggiungi il primo titolo
-      </button>
-    </div>
+    <div class="hero-actions" id="hero-actions"></div>
   </div>
 </section>
 
@@ -621,65 +612,6 @@
     </div>
   </div>
 </main>
-
-<!-- Add title modal -->
-<div class="overlay" id="add-overlay">
-  <div class="modal">
-    <h3 id="modal-heading">Aggiungi un titolo</h3>
-    <label>Tipo</label>
-    <div class="type-toggle">
-      <button type="button" class="type-btn active" id="type-film" onclick="setType('film')">Film</button>
-      <button type="button" class="type-btn" id="type-serie" onclick="setType('serie')">Serie TV</button>
-    </div>
-    <label>Titolo</label>
-    <input id="f-title" placeholder="Es. Il mio documentario" />
-    <div id="film-fields">
-      <label>Link video (diretto mp4/webm oppure link di condivisione Google Drive)</label>
-      <input id="f-video" placeholder="https://... oppure https://drive.google.com/file/d/..." />
-    </div>
-    <div id="serie-fields" style="display:none;">
-      <label>Episodi</label>
-      <div id="episodes-list"></div>
-      <button type="button" class="ep-add-btn" onclick="addEpisodeField()">+ Aggiungi episodio</button>
-      <p style="color:var(--text-faint);font-size:12px;margin-top:6px;">Puoi incollare link diretti o link di condivisione Google Drive per ogni episodio.</p>
-    </div>
-    <label>Immagine di copertina (opzionale)</label>
-    <input id="f-cover" placeholder="https://..." />
-    <label>Descrizione (opzionale)</label>
-    <input id="f-desc" placeholder="Breve descrizione" />
-    <p class="err" id="form-err">Inserisci almeno titolo e link video.</p>
-    <div class="modal-actions">
-      <button class="cancel" onclick="closeAddModal()">Annulla</button>
-      <button class="confirm" id="save-btn" onclick="saveTitle()">Salva</button>
-    </div>
-  </div>
-</div>
-
-<!-- PIN confirm modal -->
-<div class="overlay" id="pin-overlay">
-  <div class="modal" style="max-width:340px;">
-    <h3>PIN richiesto</h3>
-    <p style="color:var(--text-dim);font-size:14px;margin-top:6px;margin-bottom:16px;">Inserisci il PIN per modificare la libreria.</p>
-    <input id="pin-input" type="password" inputmode="numeric" placeholder="PIN" style="width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:11px 13px;border-radius:8px;font-size:14px;letter-spacing:2px;" />
-    <p class="err" id="pin-err" style="display:none;">PIN errato.</p>
-    <div class="modal-actions">
-      <button class="cancel" onclick="closePinModal()">Annulla</button>
-      <button class="confirm" id="pin-confirm-btn">Conferma</button>
-    </div>
-  </div>
-</div>
-
-<!-- Delete confirm modal -->
-<div class="overlay" id="delete-overlay">
-  <div class="modal" style="max-width:400px;">
-    <h3>Eliminare questo titolo?</h3>
-    <p style="color:var(--text-dim);font-size:14px;margin-top:6px;">L'azione non può essere annullata.</p>
-    <div class="modal-actions">
-      <button class="cancel" onclick="cancelDelete()">Annulla</button>
-      <button class="confirm" onclick="confirmDelete()">Elimina</button>
-    </div>
-  </div>
-</div>
 
 <!-- Player modal -->
 <div class="overlay player-modal" id="player-overlay">
@@ -776,8 +708,6 @@
 
 <script>
 let library = [];
-let currentType = 'film';
-let episodeCounter = 0;
 
 /* ---------------- Toasts ---------------- */
 function showToast(msg, warn){
@@ -802,137 +732,27 @@ function observeRows(){
   document.querySelectorAll('.row').forEach(r => rowObserver.observe(r));
 }
 
-/* ---------------- Add/edit modal ---------------- */
-function setType(type){
-  currentType = type;
-  document.getElementById('type-film').classList.toggle('active', type === 'film');
-  document.getElementById('type-serie').classList.toggle('active', type === 'serie');
-  document.getElementById('film-fields').style.display = type === 'film' ? 'block' : 'none';
-  document.getElementById('serie-fields').style.display = type === 'serie' ? 'block' : 'none';
-  if(type === 'serie' && document.getElementById('episodes-list').children.length === 0){
-    addEpisodeField();
-  }
-}
-
-function addEpisodeField(){
-  episodeCounter++;
-  const id = 'ep-' + episodeCounter;
-  const row = document.createElement('div');
-  row.className = 'ep-row';
-  row.id = id;
-  row.innerHTML = `
-    <input class="ep-title" placeholder="Es. Episodio 1" />
-    <input class="ep-video" placeholder="Link diretto o Google Drive" />
-    <button type="button" class="ep-remove" onclick="document.getElementById('${id}').remove()">×</button>`;
-  document.getElementById('episodes-list').appendChild(row);
-}
-
 /* ---------------- Storage ---------------- */
-const STORAGE_KEY = 'nyx_library';
-let storageMode = null;
-
-/* --- GitHub sync config --- */
+/* La libreria è di sola lettura: viene caricata dal file library.json
+   pubblicato sul repo GitHub. Per aggiungere/modificare/eliminare titoli,
+   modifica manualmente quel file su GitHub. */
 const GH_OWNER = 'EnvixityITA';
 const GH_REPO = 'nyx';
 const GH_PATH = 'library.json';
 const GH_BRANCH = 'main';
-const GH_TOKEN = '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';
-let ghFileSha = null;
-
-async function ghApiFetch(url, options){
-  const res = await fetch(url, Object.assign({
-    headers: {
-      'Authorization': `Bearer ${GH_TOKEN}`,
-      'Accept': 'application/vnd.github+json'
-    }
-  }, options || {}));
-  return res;
-}
-
-async function ghLoadLibrary(){
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}&t=${Date.now()}`;
-  const res = await ghApiFetch(url);
-  if(res.status === 404){
-    ghFileSha = null;
-    return [];
-  }
-  if(!res.ok) throw new Error('GitHub read failed: ' + res.status);
-  const data = await res.json();
-  ghFileSha = data.sha;
-  const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-  return decoded ? JSON.parse(decoded) : [];
-}
-
-async function ghSaveLibrary(lib){
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(lib, null, 2))));
-  const body = {
-    message: 'Aggiorna libreria Nyx',
-    content,
-    branch: GH_BRANCH
-  };
-  if(ghFileSha) body.sha = ghFileSha;
-  const res = await ghApiFetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if(!res.ok){
-    if(res.status === 409){
-      const fresh = await ghLoadLibrary();
-      body.sha = ghFileSha;
-      const retry = await ghApiFetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if(!retry.ok) throw new Error('GitHub write failed after retry: ' + retry.status);
-      const retryData = await retry.json();
-      ghFileSha = retryData.content.sha;
-      return;
-    }
-    throw new Error('GitHub write failed: ' + res.status);
-  }
-  const data = await res.json();
-  ghFileSha = data.content.sha;
-}
-
-async function detectStorageMode(){
-  if(GH_TOKEN){
-    try{
-      await ghLoadLibrary();
-      storageMode = 'github';
-      return;
-    }catch(e){ console.error('GitHub storage non disponibile', e); }
-  }
-  if(window.storage && typeof window.storage.get === 'function'){
-    try{
-      await window.storage.set('nyx_probe', '1');
-      storageMode = 'claude';
-      return;
-    }catch(e){ /* fall through to local */ }
-  }
-  storageMode = 'local';
-}
+const GH_RAW_URL = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_PATH}`;
 
 async function loadLibrary(){
   const start = Date.now();
-  await detectStorageMode();
   try{
-    if(storageMode === 'github'){
-      library = await ghLoadLibrary();
-    } else if(storageMode === 'claude'){
-      const res = await window.storage.get('library', true);
-      library = res ? JSON.parse(res.value) : [];
-    } else {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      library = raw ? JSON.parse(raw) : [];
-    }
+    const res = await fetch(`${GH_RAW_URL}?t=${Date.now()}`);
+    if(!res.ok) throw new Error('Lettura fallita: ' + res.status);
+    const text = await res.text();
+    library = text.trim() ? JSON.parse(text) : [];
   }catch(e){
+    console.error('Errore caricamento libreria da GitHub', e);
     library = [];
-    if(!(e && e.message && e.message.includes('not found'))){
-      showStorageWarning();
-    }
+    showStorageWarning();
   }
   const elapsed = Date.now() - start;
   const wait = Math.max(0, 260 - elapsed);
@@ -947,21 +767,13 @@ async function loadLibrary(){
 function showStorageWarning(){
   const w = document.createElement('div');
   w.style.cssText = 'background:#452b0a;color:#f5d9a8;padding:10px 48px;font-size:13px;text-align:center;';
-  w.textContent = 'Il salvataggio non è disponibile in questa modalità di visualizzazione: apri il file dall\'anteprima di Claude in chat, non come file scaricato sul computer, per far funzionare il salvataggio permanente.';
+  w.textContent = 'Impossibile caricare la libreria da GitHub. Controlla che il file library.json esista sul repo e sia pubblico.';
   document.body.insertBefore(w, document.body.firstChild);
 }
 
+/* La scrittura è disabilitata: la libreria si modifica a mano su GitHub. */
 async function persist(){
-  try{
-    if(storageMode === 'github'){
-      try{ await ghLoadLibrary(); }catch(e){ /* usa sha esistente se il refresh fallisce */ }
-      await ghSaveLibrary(library);
-    } else if(storageMode === 'claude'){
-      await window.storage.set('library', JSON.stringify(library), true);
-    } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
-    }
-  }catch(e){ console.error('Errore salvataggio', e); showStorageWarning(); }
+  console.info('Modifica della libreria disabilitata: aggiorna library.json direttamente su GitHub.');
 }
 
 /* ---------------- Render ---------------- */
@@ -973,15 +785,13 @@ function render(){
 
   if(library.length === 0){
     hint.style.display = 'block';
-    hint.textContent = 'Non hai ancora aggiunto nessun titolo. Usa "+ Aggiungi titolo" in alto per iniziare.';
+    hint.textContent = 'Nessun titolo nella libreria al momento.';
     document.getElementById('continue-row').style.display = 'none';
     document.getElementById('favorites-row').style.display = 'none';
     document.getElementById('hero').style.backgroundImage = 'none';
-    document.getElementById('hero-title').textContent = 'Costruisci la tua libreria';
-    document.getElementById('hero-desc').textContent = 'Aggiungi i tuoi video tramite link diretto e crea il tuo catalogo personale, organizzato come una vera piattaforma di streaming.';
-    document.getElementById('hero-actions').innerHTML = `<button class="btn-primary" onclick="openAddModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        Aggiungi il primo titolo</button>`;
+    document.getElementById('hero-title').textContent = 'Nyx';
+    document.getElementById('hero-desc').textContent = 'La libreria verrà aggiornata a breve.';
+    document.getElementById('hero-actions').innerHTML = '';
     return;
   }
 
@@ -1008,10 +818,7 @@ function render(){
   document.getElementById('hero-actions').innerHTML = `
     <button class="btn-primary" onclick="openPlayer(${library.length-1})">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      Riproduci</button>
-    <button class="btn-secondary" onclick="openEditModal(event, ${library.length-1})">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      Modifica</button>`;
+      Riproduci</button>`;
 
   renderContinueWatching();
   renderFavorites();
@@ -1074,8 +881,6 @@ function buildCard(item, idx, order, isContinue){
   card.innerHTML = `
     ${pill}
     <button class="icon-btn fav-btn${favActive}" aria-label="Preferiti" onclick="toggleFavorite(event, ${idx})">★</button>
-    <button class="icon-btn edit-btn" aria-label="Modifica titolo" onclick="openEditModal(event, ${idx})"><i>&#9998;</i></button>
-    <button class="icon-btn delete-btn" aria-label="Elimina titolo" onclick="requestDelete(event, ${idx})">&times;</button>
     <video muted loop preload="none" disablepictureinpicture disableremoteplayback${isDriveSource(previewSrc) ? '' : ` src="${previewSrc}"`}></video>
     <div class="card-gradient"></div>
     <div class="spotlight"></div>
@@ -1134,115 +939,7 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
-/* ---------------- Add / edit form ---------------- */
-let editingIndex = null;
-
-/* ---------------- PIN protection ---------------- */
-const EDIT_PIN = '3011';
-const PIN_SESSION_KEY = 'nyx_pin_ok';
-let pinPendingAction = null;
-
-function isPinUnlocked(){
-  return sessionStorage.getItem(PIN_SESSION_KEY) === '1';
-}
-
-function requirePin(action){
-  if(isPinUnlocked()){
-    action();
-    return;
-  }
-  pinPendingAction = action;
-  document.getElementById('pin-input').value = '';
-  document.getElementById('pin-err').style.display = 'none';
-  document.getElementById('pin-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('pin-input').focus(), 150);
-}
-
-function closePinModal(){
-  document.getElementById('pin-overlay').classList.remove('open');
-  pinPendingAction = null;
-}
-
-function submitPin(){
-  const val = document.getElementById('pin-input').value.trim();
-  if(val === EDIT_PIN){
-    sessionStorage.setItem(PIN_SESSION_KEY, '1');
-    const action = pinPendingAction;
-    closePinModal();
-    if(action) action();
-  } else {
-    const err = document.getElementById('pin-err');
-    err.style.display = 'block';
-    err.style.animation = 'none';
-    requestAnimationFrame(() => { err.style.animation = 'shake .35s'; });
-  }
-}
-document.getElementById('pin-confirm-btn').onclick = submitPin;
-document.getElementById('pin-input').addEventListener('keydown', (e) => {
-  if(e.key === 'Enter') submitPin();
-});
-
-function openAddModal(){
-  requirePin(_openAddModal);
-}
-function _openAddModal(){
-  editingIndex = null;
-  document.getElementById('modal-heading').textContent = 'Aggiungi un titolo';
-  document.getElementById('save-btn').textContent = 'Salva';
-  document.getElementById('form-err').style.display = 'none';
-  document.getElementById('add-overlay').classList.add('open');
-  setType('film');
-  document.getElementById('episodes-list').innerHTML = '';
-  document.getElementById('f-title').value = '';
-  document.getElementById('f-video').value = '';
-  document.getElementById('f-cover').value = '';
-  document.getElementById('f-desc').value = '';
-  setTimeout(() => document.getElementById('f-title').focus(), 200);
-}
-
-function displayVideoUrl(src){
-  if(isDriveSource(src)) return `https://drive.google.com/file/d/${src.slice(6)}/view`;
-  return src;
-}
-
-function openEditModal(event, idx){
-  event.stopPropagation();
-  requirePin(() => _openEditModal(idx));
-}
-function _openEditModal(idx){
-  editingIndex = idx;
-  const item = library[idx];
-  document.getElementById('modal-heading').textContent = 'Modifica titolo';
-  document.getElementById('save-btn').textContent = 'Salva modifiche';
-  document.getElementById('form-err').style.display = 'none';
-  document.getElementById('add-overlay').classList.add('open');
-  setType(item.type);
-  document.getElementById('f-title').value = item.title;
-  document.getElementById('f-cover').value = item.cover || '';
-  document.getElementById('f-desc').value = item.desc || '';
-  document.getElementById('episodes-list').innerHTML = '';
-  if(item.type === 'film'){
-    document.getElementById('f-video').value = displayVideoUrl(item.video);
-  } else {
-    document.getElementById('f-video').value = '';
-    item.episodes.forEach(ep => {
-      addEpisodeField();
-      const rows = document.querySelectorAll('#episodes-list .ep-row');
-      const last = rows[rows.length - 1];
-      last.querySelector('.ep-title').value = ep.title;
-      last.querySelector('.ep-video').value = displayVideoUrl(ep.video);
-    });
-  }
-}
-
-function closeAddModal(){
-  editingIndex = null;
-  document.getElementById('add-overlay').classList.remove('open');
-  document.getElementById('form-err').style.display = 'none';
-  ['f-title','f-video','f-cover','f-desc'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('episodes-list').innerHTML = '';
-}
-
+/* ---------------- Google Drive link support ---------------- */
 function extractDriveId(url){
   if(!url) return null;
   const patterns = [
@@ -1270,77 +967,6 @@ function isDriveSource(src){
 
 function driveEmbedUrl(src){
   return `https://drive.google.com/file/d/${src.slice(6)}/preview`;
-}
-
-async function saveTitle(){
-  const title = document.getElementById('f-title').value.trim();
-  const cover = document.getElementById('f-cover').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
-
-  let newItem;
-  if(currentType === 'film'){
-    const video = normalizeVideoUrl(document.getElementById('f-video').value.trim());
-    if(!title || !video){
-      showFormError('Inserisci almeno titolo e link video.');
-      return;
-    }
-    newItem = {type:'film', title, video, cover, desc};
-  } else {
-    const rows = Array.from(document.querySelectorAll('#episodes-list .ep-row'));
-    const episodes = rows.map(r => ({
-      title: r.querySelector('.ep-title').value.trim(),
-      video: normalizeVideoUrl(r.querySelector('.ep-video').value.trim())
-    })).filter(e => e.title && e.video);
-    if(!title || episodes.length === 0){
-      showFormError('Inserisci il titolo e almeno un episodio con link video.');
-      return;
-    }
-    newItem = {type:'serie', title, cover, desc, episodes};
-  }
-
-  if(editingIndex !== null){
-    newItem.favorite = library[editingIndex].favorite;
-    newItem.progress = library[editingIndex].progress;
-    library[editingIndex] = newItem;
-  } else {
-    library.push(newItem);
-  }
-  await persist();
-  render();
-  closeAddModal();
-  showToast(editingIndex !== null ? 'Modifiche salvate' : 'Titolo aggiunto alla libreria');
-}
-
-function showFormError(msg){
-  const err = document.getElementById('form-err');
-  err.textContent = msg;
-  err.style.display = 'block';
-  err.style.animation = 'none';
-  requestAnimationFrame(() => { err.style.animation = 'shake .35s'; });
-}
-
-let pendingDeleteIdx = null;
-
-function requestDelete(event, idx){
-  event.stopPropagation();
-  requirePin(() => _requestDelete(idx));
-}
-function _requestDelete(idx){
-  pendingDeleteIdx = idx;
-  document.getElementById('delete-overlay').classList.add('open');
-}
-function cancelDelete(){
-  pendingDeleteIdx = null;
-  document.getElementById('delete-overlay').classList.remove('open');
-}
-async function confirmDelete(){
-  if(pendingDeleteIdx !== null){
-    library.splice(pendingDeleteIdx, 1);
-    await persist();
-    render();
-    showToast('Titolo eliminato');
-  }
-  cancelDelete();
 }
 
 /* ================= PLAYER ================= */
@@ -1794,19 +1420,13 @@ document.addEventListener('keydown', (e) => {
 document.querySelectorAll('.overlay').forEach(ov => {
   ov.addEventListener('click', (e) => {
     if(e.target === ov){
-      if(ov.id === 'add-overlay') closeAddModal();
       if(ov.id === 'player-overlay') closePlayer();
-      if(ov.id === 'delete-overlay') cancelDelete();
-      if(ov.id === 'pin-overlay') closePinModal();
     }
   });
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
-    if(document.getElementById('add-overlay').classList.contains('open')) closeAddModal();
     if(document.getElementById('player-overlay').classList.contains('open')) closePlayer();
-    if(document.getElementById('delete-overlay').classList.contains('open')) cancelDelete();
-    if(document.getElementById('pin-overlay').classList.contains('open')) closePinModal();
   }
 });
 function moveNavPill(el){
