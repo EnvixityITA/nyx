@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nyx — la tua libreria</title>
+<title>Nyx</title>
 <style>
   :root{
     --bg:#0A0A0C;
@@ -655,6 +655,20 @@
   </div>
 </div>
 
+<!-- PIN confirm modal -->
+<div class="overlay" id="pin-overlay">
+  <div class="modal" style="max-width:340px;">
+    <h3>PIN richiesto</h3>
+    <p style="color:var(--text-dim);font-size:14px;margin-top:6px;margin-bottom:16px;">Inserisci il PIN per modificare la libreria.</p>
+    <input id="pin-input" type="password" inputmode="numeric" placeholder="PIN" style="width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:11px 13px;border-radius:8px;font-size:14px;letter-spacing:2px;" />
+    <p class="err" id="pin-err" style="display:none;">PIN errato.</p>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closePinModal()">Annulla</button>
+      <button class="confirm" id="pin-confirm-btn">Conferma</button>
+    </div>
+  </div>
+</div>
+
 <!-- Delete confirm modal -->
 <div class="overlay" id="delete-overlay">
   <div class="modal" style="max-width:400px;">
@@ -833,7 +847,7 @@ async function loadLibrary(){
   await detectStorageMode();
   try{
     if(storageMode === 'claude'){
-      const res = await window.storage.get('library');
+      const res = await window.storage.get('library', true);
       library = res ? JSON.parse(res.value) : [];
     } else {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -865,7 +879,7 @@ function showStorageWarning(){
 async function persist(){
   try{
     if(storageMode === 'claude'){
-      await window.storage.set('library', JSON.stringify(library));
+      await window.storage.set('library', JSON.stringify(library), true);
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
     }
@@ -1045,7 +1059,55 @@ function escapeHtml(s){
 /* ---------------- Add / edit form ---------------- */
 let editingIndex = null;
 
+/* ---------------- PIN protection ---------------- */
+const EDIT_PIN = '3011';
+const PIN_SESSION_KEY = 'nyx_pin_ok';
+let pinPendingAction = null;
+
+function isPinUnlocked(){
+  return sessionStorage.getItem(PIN_SESSION_KEY) === '1';
+}
+
+function requirePin(action){
+  if(isPinUnlocked()){
+    action();
+    return;
+  }
+  pinPendingAction = action;
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-err').style.display = 'none';
+  document.getElementById('pin-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('pin-input').focus(), 150);
+}
+
+function closePinModal(){
+  document.getElementById('pin-overlay').classList.remove('open');
+  pinPendingAction = null;
+}
+
+function submitPin(){
+  const val = document.getElementById('pin-input').value.trim();
+  if(val === EDIT_PIN){
+    sessionStorage.setItem(PIN_SESSION_KEY, '1');
+    const action = pinPendingAction;
+    closePinModal();
+    if(action) action();
+  } else {
+    const err = document.getElementById('pin-err');
+    err.style.display = 'block';
+    err.style.animation = 'none';
+    requestAnimationFrame(() => { err.style.animation = 'shake .35s'; });
+  }
+}
+document.getElementById('pin-confirm-btn').onclick = submitPin;
+document.getElementById('pin-input').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') submitPin();
+});
+
 function openAddModal(){
+  requirePin(_openAddModal);
+}
+function _openAddModal(){
   editingIndex = null;
   document.getElementById('modal-heading').textContent = 'Aggiungi un titolo';
   document.getElementById('save-btn').textContent = 'Salva';
@@ -1067,6 +1129,9 @@ function displayVideoUrl(src){
 
 function openEditModal(event, idx){
   event.stopPropagation();
+  requirePin(() => _openEditModal(idx));
+}
+function _openEditModal(idx){
   editingIndex = idx;
   const item = library[idx];
   document.getElementById('modal-heading').textContent = 'Modifica titolo';
@@ -1180,6 +1245,9 @@ let pendingDeleteIdx = null;
 
 function requestDelete(event, idx){
   event.stopPropagation();
+  requirePin(() => _requestDelete(idx));
+}
+function _requestDelete(idx){
   pendingDeleteIdx = idx;
   document.getElementById('delete-overlay').classList.add('open');
 }
@@ -1651,6 +1719,7 @@ document.querySelectorAll('.overlay').forEach(ov => {
       if(ov.id === 'add-overlay') closeAddModal();
       if(ov.id === 'player-overlay') closePlayer();
       if(ov.id === 'delete-overlay') cancelDelete();
+      if(ov.id === 'pin-overlay') closePinModal();
     }
   });
 });
@@ -1659,6 +1728,7 @@ document.addEventListener('keydown', (e) => {
     if(document.getElementById('add-overlay').classList.contains('open')) closeAddModal();
     if(document.getElementById('player-overlay').classList.contains('open')) closePlayer();
     if(document.getElementById('delete-overlay').classList.contains('open')) cancelDelete();
+    if(document.getElementById('pin-overlay').classList.contains('open')) closePinModal();
   }
 });
 function moveNavPill(el){
