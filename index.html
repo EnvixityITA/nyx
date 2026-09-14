@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nyx</title>
+<title>Nyx — la tua libreria</title>
 <style>
   :root{
     --bg:#0A0A0C;
@@ -186,6 +186,7 @@
   }
   @keyframes cardIn{to{opacity:1;transform:translateY(0);}}
   .card:hover{z-index:3;box-shadow:var(--shadow-lg), 0 0 0 1.5px var(--accent);}
+  .card.card-pressed{transition:transform .18s var(--ease-out), box-shadow .18s ease;}
   .card .spotlight{
     position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .3s ease;
     background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.10), transparent 60%);
@@ -260,11 +261,11 @@
 
   /* ---------- Overlays / Modal ---------- */
   .overlay{
-    position:fixed;inset:0;background:rgba(6,6,8,0.82);backdrop-filter:blur(3px);
+    position:fixed;inset:0;background:rgba(6,6,8,0.82);backdrop-filter:blur(0px);
     display:none;align-items:center;justify-content:center;z-index:200;padding:24px;
-    opacity:0;transition:opacity .2s ease;
+    opacity:0;transition:opacity .38s var(--ease-out), backdrop-filter .38s var(--ease-out);
   }
-  .overlay.open{display:flex;opacity:1;}
+  .overlay.open{display:flex;opacity:1;backdrop-filter:blur(3px);}
   .modal{
     background:var(--panel);border-radius:14px;width:100%;max-width:640px;
     border:1px solid var(--border);padding:28px;
@@ -334,14 +335,22 @@
   /* ---------- Player ---------- */
   .player-modal .modal{
     max-width:1020px;padding:0;overflow:hidden;border-radius:14px;
-    animation:playerIn .35s var(--ease-out);
+    transform:none;transform-origin:center center;
+    will-change:transform, opacity, border-radius;
   }
-  @keyframes playerIn{from{opacity:0;transform:scale(0.94);}to{opacity:1;transform:scale(1);}}
-  .player-modal .modal{transform:none;}
+  .player-modal.morphing .modal{transition:none;}
+  .player-modal.morph-in .modal{transition:transform .48s cubic-bezier(.22,.9,.32,1), border-radius .48s ease;}
+  .player-modal.morph-out .modal{transition:transform .32s cubic-bezier(.5,0,.75,0), opacity .32s ease, border-radius .32s ease;}
+  .player-modal .video-frame, .player-modal .player-info, .player-modal .ep-sidebar{
+    opacity:0;transition:opacity .25s ease .1s;
+  }
+  .player-modal.content-in .video-frame, .player-modal.content-in .player-info, .player-modal.content-in .ep-sidebar{
+    opacity:1;
+  }
   .player-body{display:flex;}
   .player-main{flex:1;min-width:0;}
   .video-frame{position:relative;background:#000;line-height:0;}
-  .video-frame video{width:100%;display:block;max-height:64vh;background:#000;}
+  .video-frame video{width:100%;display:block;max-height:64vh;background:#000;object-fit:contain;}
   .video-frame video::-webkit-media-controls{display:none !important;}
   .video-frame video::-webkit-media-controls-panel{display:none !important;}
   .video-frame video::-webkit-media-controls-start-playback-button{display:none !important;-webkit-appearance:none;}
@@ -349,6 +358,23 @@
   .video-frame video::-internal-media-controls-overlay-cast-button{display:none !important;}
   .video-frame{cursor:pointer;}
   .video-frame.controls-hidden, .video-frame.controls-hidden video{cursor:none;}
+
+  .video-frame:fullscreen,
+  .video-frame:-webkit-full-screen{
+    width:100vw;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:#000;
+  }
+  .video-frame:fullscreen video,
+  .video-frame:-webkit-full-screen video{
+    width:100%;height:100%;max-height:none;object-fit:contain;
+  }
+  .video-frame:fullscreen .buffer-spinner,
+  .video-frame:-webkit-full-screen .buffer-spinner{transform:translate(-50%,-50%);}
+  .video-frame:fullscreen .controls-bar,
+  .video-frame:-webkit-full-screen .controls-bar{padding:14px 28px 26px;}
+  .video-frame:fullscreen .seek-tooltip,
+  .video-frame:-webkit-full-screen .seek-tooltip{font-size:13px;}
 
   .buffer-spinner{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -974,7 +1000,17 @@ function buildCard(item, idx, order, isContinue){
     const ry = ((px - 50) / 50) * 6;
     card.style.transform = `scale(1.06) translateY(-6px) perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg)`;
   });
-  card.onclick = () => openPlayer(idx);
+  card.onclick = () => {
+    card.classList.add('card-pressed');
+    card.style.transform = 'scale(0.96)';
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        openPlayer(idx, card);
+        card.style.transform = '';
+        card.classList.remove('card-pressed');
+      }, 90);
+    });
+  };
   return card;
 }
 
@@ -1130,7 +1166,9 @@ function fmtTime(t){
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-function openPlayer(i){
+let openedFromRect = null;
+
+function openPlayer(i, cardEl){
   curIdx = i;
   curItem = library[i];
   const v = video();
@@ -1151,8 +1189,45 @@ function openPlayer(i){
     const resumeEp = (curItem.progress && typeof curItem.progress.epIdx === 'number') ? curItem.progress.epIdx : 0;
     playEpisode(resumeEp, true);
   }
-  document.getElementById('player-overlay').classList.add('open');
-  setTimeout(() => v.play().catch(()=>{}), 50);
+
+  const overlay = document.getElementById('player-overlay');
+  const modal = overlay.querySelector('.modal');
+  overlay.classList.remove('content-in', 'morph-in', 'morph-out');
+  modal.style.transition = 'none';
+  modal.style.opacity = '';
+  overlay.classList.add('open');
+
+  openedFromRect = cardEl ? cardEl.getBoundingClientRect() : null;
+
+  requestAnimationFrame(() => {
+    const modalRect = modal.getBoundingClientRect();
+    if(openedFromRect && modalRect.width && modalRect.height){
+      const scaleX = openedFromRect.width / modalRect.width;
+      const scaleY = openedFromRect.height / modalRect.height;
+      const tx = (openedFromRect.left + openedFromRect.width/2) - (modalRect.left + modalRect.width/2);
+      const ty = (openedFromRect.top + openedFromRect.height/2) - (modalRect.top + modalRect.height/2);
+      modal.style.transform = `translate(${tx}px,${ty}px) scale(${scaleX},${scaleY})`;
+      modal.style.borderRadius = '10px';
+    } else {
+      modal.style.transform = 'scale(0.9)';
+    }
+    void modal.offsetWidth;
+    modal.style.transition = '';
+    overlay.classList.add('morph-in');
+    modal.style.transform = 'translate(0,0) scale(1,1)';
+    modal.style.borderRadius = '14px';
+    setTimeout(() => overlay.classList.add('content-in'), 160);
+    const onEnd = (e) => {
+      if(e && e.propertyName && e.propertyName !== 'transform') return;
+      modal.removeEventListener('transitionend', onEnd);
+      overlay.classList.remove('morph-in');
+      modal.style.transform = '';
+      modal.style.borderRadius = '';
+    };
+    modal.addEventListener('transitionend', onEnd);
+  });
+
+  setTimeout(() => v.play().catch(()=>{}), 60);
 }
 
 function renderEpSidebar(){
@@ -1224,12 +1299,51 @@ function closePlayer(){
   saveProgress(false);
   const v = video();
   v.pause();
-  v.src = '';
   hideNextUp();
-  document.getElementById('ep-sidebar-list').innerHTML = '';
-  document.getElementById('player-overlay').classList.remove('open');
-  curItem = null; curIdx = null; curEpIdx = null;
-  render();
+
+  const overlay = document.getElementById('player-overlay');
+  const modal = overlay.querySelector('.modal');
+  overlay.classList.remove('content-in', 'morph-in');
+
+  const finish = () => {
+    v.src = '';
+    document.getElementById('ep-sidebar-list').innerHTML = '';
+    overlay.classList.remove('open', 'morph-out');
+    modal.style.transition = '';
+    modal.style.transform = '';
+    modal.style.opacity = '';
+    modal.style.borderRadius = '';
+    curItem = null; curIdx = null; curEpIdx = null;
+    render();
+  };
+
+  const modalRect = modal.getBoundingClientRect();
+  if(openedFromRect && modalRect.width && modalRect.height){
+    const scaleX = openedFromRect.width / modalRect.width;
+    const scaleY = openedFromRect.height / modalRect.height;
+    const tx = (openedFromRect.left + openedFromRect.width/2) - (modalRect.left + modalRect.width/2);
+    const ty = (openedFromRect.top + openedFromRect.height/2) - (modalRect.top + modalRect.height/2);
+    overlay.classList.add('morph-out');
+    void modal.offsetWidth;
+    modal.style.transform = `translate(${tx}px,${ty}px) scale(${scaleX},${scaleY})`;
+    modal.style.borderRadius = '10px';
+    modal.style.opacity = '0.4';
+    let done = false;
+    const onEnd = (e) => {
+      if(done) return;
+      if(e && e.propertyName && e.propertyName !== 'transform') return;
+      done = true;
+      modal.removeEventListener('transitionend', onEnd);
+      finish();
+    };
+    modal.addEventListener('transitionend', onEnd);
+    setTimeout(() => { if(!done){ done = true; finish(); } }, 400);
+  } else {
+    overlay.classList.add('morph-out');
+    modal.style.transform = 'scale(0.9)';
+    modal.style.opacity = '0';
+    setTimeout(finish, 320);
+  }
 }
 
 /* --- custom controls wiring --- */
@@ -1427,6 +1541,13 @@ document.getElementById('fullscreen-btn').onclick = () => {
   if(!document.fullscreenElement) frame.requestFullscreen?.();
   else document.exitFullscreen?.();
 };
+const EXPAND_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+const COLLAPSE_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3v4a1 1 0 0 1-1 1H4M20 8h-4a1 1 0 0 1-1-1V3M3 16h4a1 1 0 0 1 1 1v4M15 21v-4a1 1 0 0 1 1-1h4"/></svg>';
+document.addEventListener('fullscreenchange', () => {
+  const isFs = !!document.fullscreenElement;
+  document.getElementById('fullscreen-btn').innerHTML = isFs ? COLLAPSE_ICON : EXPAND_ICON;
+  wakeControls();
+});
 
 document.getElementById('player-fav-btn').onclick = () => {
   if(curIdx === null) return;
