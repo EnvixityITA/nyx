@@ -1,1 +1,7 @@
-[]
+{
+  "type": "film",
+  "title": "Nome del film",
+  "video": "https://link-diretto-o-drive:ID",
+  "cover": "https://link-immagine-copertina",
+  "desc": "descrizione breve"
+}
