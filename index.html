@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nyx — la tua libreria</title>
+<title>Nyx</title>
 <style>
   :root{
     --bg:#0A0A0C;
@@ -357,6 +357,10 @@
   .video-frame video::-webkit-media-controls-overlay-play-button{display:none !important;-webkit-appearance:none;}
   .video-frame video::-internal-media-controls-overlay-cast-button{display:none !important;}
   .video-frame{cursor:pointer;}
+  .video-frame.drive-mode .controls-bar,
+  .video-frame.drive-mode .buffer-spinner,
+  .video-frame.drive-mode .center-pulse{display:none !important;}
+  .video-frame.drive-mode{cursor:default;}
   .video-frame.controls-hidden, .video-frame.controls-hidden video{cursor:none;}
 
   .video-frame:fullscreen,
@@ -624,13 +628,14 @@
     <label>Titolo</label>
     <input id="f-title" placeholder="Es. Il mio documentario" />
     <div id="film-fields">
-      <label>Link video diretto (mp4, webm...)</label>
-      <input id="f-video" placeholder="https://..." />
+      <label>Link video (diretto mp4/webm oppure link di condivisione Google Drive)</label>
+      <input id="f-video" placeholder="https://... oppure https://drive.google.com/file/d/..." />
     </div>
     <div id="serie-fields" style="display:none;">
       <label>Episodi</label>
       <div id="episodes-list"></div>
       <button type="button" class="ep-add-btn" onclick="addEpisodeField()">+ Aggiungi episodio</button>
+      <p style="color:var(--text-faint);font-size:12px;margin-top:6px;">Puoi incollare link diretti o link di condivisione Google Drive per ogni episodio.</p>
     </div>
     <label>Immagine di copertina (opzionale)</label>
     <input id="f-cover" placeholder="https://..." />
@@ -664,6 +669,7 @@
       <div class="player-main">
         <div class="video-frame" id="video-frame">
           <video id="player-video" playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload noplaybackrate nofullscreen noremoteplayback" x-webkit-airplay="deny" oncontextmenu="return false;"></video>
+          <iframe id="player-drive-frame" style="display:none;width:100%;aspect-ratio:16/9;border:0;background:#000;" allow="autoplay" allowfullscreen></iframe>
           <div class="buffer-spinner" id="buffer-spinner"></div>
           <div class="center-pulse" id="center-pulse"></div>
           <div class="seek-flash left" id="seek-flash-left"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg> 10s</div>
@@ -796,7 +802,7 @@ function addEpisodeField(){
   row.id = id;
   row.innerHTML = `
     <input class="ep-title" placeholder="Es. Episodio 1" />
-    <input class="ep-video" placeholder="Link video diretto" />
+    <input class="ep-video" placeholder="Link diretto o Google Drive" />
     <button type="button" class="ep-remove" onclick="document.getElementById('${id}').remove()">×</button>`;
   document.getElementById('episodes-list').appendChild(row);
 }
@@ -972,7 +978,7 @@ function buildCard(item, idx, order, isContinue){
     <button class="icon-btn fav-btn${favActive}" aria-label="Preferiti" onclick="toggleFavorite(event, ${idx})">★</button>
     <button class="icon-btn edit-btn" aria-label="Modifica titolo" onclick="openEditModal(event, ${idx})"><i>&#9998;</i></button>
     <button class="icon-btn delete-btn" aria-label="Elimina titolo" onclick="requestDelete(event, ${idx})">&times;</button>
-    <video muted loop preload="none" disablepictureinpicture disableremoteplayback src="${previewSrc}"></video>
+    <video muted loop preload="none" disablepictureinpicture disableremoteplayback${isDriveSource(previewSrc) ? '' : ` src="${previewSrc}"`}></video>
     <div class="card-gradient"></div>
     <div class="spotlight"></div>
     <div class="play-icon">
@@ -1048,6 +1054,11 @@ function openAddModal(){
   setTimeout(() => document.getElementById('f-title').focus(), 200);
 }
 
+function displayVideoUrl(src){
+  if(isDriveSource(src)) return `https://drive.google.com/file/d/${src.slice(6)}/view`;
+  return src;
+}
+
 function openEditModal(event, idx){
   event.stopPropagation();
   editingIndex = idx;
@@ -1062,7 +1073,7 @@ function openEditModal(event, idx){
   document.getElementById('f-desc').value = item.desc || '';
   document.getElementById('episodes-list').innerHTML = '';
   if(item.type === 'film'){
-    document.getElementById('f-video').value = item.video;
+    document.getElementById('f-video').value = displayVideoUrl(item.video);
   } else {
     document.getElementById('f-video').value = '';
     item.episodes.forEach(ep => {
@@ -1070,7 +1081,7 @@ function openEditModal(event, idx){
       const rows = document.querySelectorAll('#episodes-list .ep-row');
       const last = rows[rows.length - 1];
       last.querySelector('.ep-title').value = ep.title;
-      last.querySelector('.ep-video').value = ep.video;
+      last.querySelector('.ep-video').value = displayVideoUrl(ep.video);
     });
   }
 }
@@ -1083,6 +1094,35 @@ function closeAddModal(){
   document.getElementById('episodes-list').innerHTML = '';
 }
 
+function extractDriveId(url){
+  if(!url) return null;
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/,
+    /docs\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/
+  ];
+  for(const p of patterns){
+    const m = url.match(p);
+    if(m) return m[1];
+  }
+  return null;
+}
+
+function normalizeVideoUrl(url){
+  const id = extractDriveId(url);
+  if(id) return `drive:${id}`;
+  return url;
+}
+
+function isDriveSource(src){
+  return typeof src === 'string' && src.startsWith('drive:');
+}
+
+function driveEmbedUrl(src){
+  return `https://drive.google.com/file/d/${src.slice(6)}/preview`;
+}
+
 async function saveTitle(){
   const title = document.getElementById('f-title').value.trim();
   const cover = document.getElementById('f-cover').value.trim();
@@ -1090,7 +1130,7 @@ async function saveTitle(){
 
   let newItem;
   if(currentType === 'film'){
-    const video = document.getElementById('f-video').value.trim();
+    const video = normalizeVideoUrl(document.getElementById('f-video').value.trim());
     if(!title || !video){
       showFormError('Inserisci almeno titolo e link video.');
       return;
@@ -1100,7 +1140,7 @@ async function saveTitle(){
     const rows = Array.from(document.querySelectorAll('#episodes-list .ep-row'));
     const episodes = rows.map(r => ({
       title: r.querySelector('.ep-title').value.trim(),
-      video: r.querySelector('.ep-video').value.trim()
+      video: normalizeVideoUrl(r.querySelector('.ep-video').value.trim())
     })).filter(e => e.title && e.video);
     if(!title || episodes.length === 0){
       showFormError('Inserisci il titolo e almeno un episodio con link video.');
@@ -1227,7 +1267,7 @@ function openPlayer(i, cardEl){
     modal.addEventListener('transitionend', onEnd);
   });
 
-  setTimeout(() => v.play().catch(()=>{}), 60);
+  setTimeout(() => { if(!isDriveSource(curItem.type === 'film' ? curItem.video : curItem.episodes[curEpIdx].video)) v.play().catch(()=>{}); }, 60);
 }
 
 function renderEpSidebar(){
@@ -1268,6 +1308,23 @@ function playEpisode(epIdx, isResumeFromOpen){
 
 function loadSource(src, startAt){
   const v = video();
+  const frame = document.getElementById('video-frame');
+  const iframe = document.getElementById('player-drive-frame');
+
+  if(isDriveSource(src)){
+    v.pause();
+    v.removeAttribute('src');
+    v.style.display = 'none';
+    iframe.style.display = 'block';
+    iframe.src = driveEmbedUrl(src);
+    frame.classList.add('drive-mode');
+    return;
+  }
+
+  frame.classList.remove('drive-mode');
+  iframe.style.display = 'none';
+  iframe.src = '';
+  v.style.display = '';
   v.src = src;
   v.playbackRate = parseFloat(document.getElementById('speed-select').value || '1');
   const onLoaded = () => {
@@ -1280,6 +1337,10 @@ function loadSource(src, startAt){
 
 function saveProgress(finished){
   if(curIdx === null) return;
+  if(curItem && ((curItem.type === 'film' && isDriveSource(curItem.video)) ||
+     (curItem.type === 'serie' && curEpIdx !== null && isDriveSource(curItem.episodes[curEpIdx].video)))){
+    return;
+  }
   const v = video();
   const time = v.currentTime || 0;
   const duration = v.duration || 0;
