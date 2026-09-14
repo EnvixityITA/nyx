@@ -639,6 +639,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="search-input" placeholder="Cerca per titolo o descrizione" oninput="filterLibrary()" />
     </div>
+    <button class="add-btn" id="surprise-btn" title="Scegli un titolo a caso dalla libreria" onclick="surpriseMe()" style="display:none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h4"/></svg>
+      Sorprendimi
+    </button>
   </div>
 </header>
 
@@ -753,6 +757,9 @@
                 <option value="1.5">1.5x</option>
                 <option value="2">2x</option>
               </select>
+              <button class="ctrl-btn" id="pip-btn" title="Picture-in-Picture (p)">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="11.5" width="7" height="5" rx="1" fill="currentColor" stroke="none"/></svg>
+              </button>
               <button class="ctrl-btn" id="fullscreen-btn" title="Schermo intero (f)">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
               </button>
@@ -928,6 +935,13 @@ function setGenreFilter(g){
   render();
 }
 
+/* ---------------- Sorprendimi (titolo casuale) ---------------- */
+function surpriseMe(){
+  if(library.length === 0) return;
+  const idx = Math.floor(Math.random() * library.length);
+  openDetail(idx);
+}
+
 function sortItems(pairs){
   const mode = document.getElementById('sort-select')?.value || 'recent';
   const arr = pairs.slice();
@@ -966,8 +980,10 @@ function render(){
     document.getElementById('hero-title').textContent = 'Nyx';
     document.getElementById('hero-desc').textContent = 'La libreria verrà aggiornata a breve.';
     document.getElementById('hero-actions').innerHTML = '';
+    document.getElementById('surprise-btn').style.display = 'none';
     return;
   }
+  document.getElementById('surprise-btn').style.display = library.length > 1 ? 'flex' : 'none';
 
   renderGenreChips();
 
@@ -1617,6 +1633,19 @@ document.addEventListener('fullscreenchange', () => {
   wakeControls();
 });
 
+/* Picture-in-Picture */
+const pipBtn = document.getElementById('pip-btn');
+if(document.pictureInPictureEnabled){
+  pipBtn.onclick = async () => {
+    try{
+      if(document.pictureInPictureElement) await document.exitPictureInPicture();
+      else await video().requestPictureInPicture();
+    }catch(err){ showToast('Picture-in-Picture non disponibile', true); }
+  };
+}else{
+  pipBtn.style.display = 'none';
+}
+
 document.getElementById('player-fav-btn').onclick = () => {
   if(curIdx === null) return;
   setFavorite(library[curIdx], !library[curIdx].favorite);
@@ -1642,6 +1671,9 @@ document.addEventListener('keydown', (e) => {
   else if(e.key === 'ArrowRight'){ v.currentTime = Math.min(v.duration||1e9, v.currentTime + 10); flashSeek('right'); }
   else if(e.key === 'm' || e.key === 'M'){ v.muted = !v.muted; updateMuteIcon(v.muted, v.volume); }
   else if(e.key === 'f' || e.key === 'F'){ document.getElementById('fullscreen-btn').click(); }
+  else if(e.key === 'p' || e.key === 'P'){ if(document.pictureInPictureEnabled) document.getElementById('pip-btn').click(); }
+  else if(e.key === 'ArrowUp'){ e.preventDefault(); v.volume = Math.min(1, v.volume + 0.1); v.muted = false; volSlider.value = v.volume; updateMuteIcon(v.muted, v.volume); }
+  else if(e.key === 'ArrowDown'){ e.preventDefault(); v.volume = Math.max(0, v.volume - 0.1); volSlider.value = v.volume; updateMuteIcon(v.muted, v.volume); }
 });
 
 /* ---------------- Global overlay / escape handling ---------------- */
