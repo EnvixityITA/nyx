@@ -842,6 +842,32 @@ const GH_PATH = 'library.json';
 const GH_BRANCH = 'main';
 const GH_RAW_URL = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_PATH}`;
 
+/* ---------------- Preferiti locali (per dispositivo, non sincronizzati) ---------------- */
+const FAV_KEY = 'nyx_local_favorites';
+
+function getLocalFavorites(){
+  try{ return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function setLocalFavorites(arr){
+  try{ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
+  catch(e){ console.error('Impossibile salvare i preferiti in locale', e); }
+}
+function favKeyFor(item){
+  return (item && item.title ? item.title : '').trim().toLowerCase();
+}
+function applyLocalFavorites(){
+  const favs = new Set(getLocalFavorites());
+  library.forEach(item => { item.favorite = favs.has(favKeyFor(item)); });
+}
+function setFavorite(item, value){
+  item.favorite = value;
+  const favs = new Set(getLocalFavorites());
+  const key = favKeyFor(item);
+  if(value) favs.add(key); else favs.delete(key);
+  setLocalFavorites(Array.from(favs));
+}
+
 async function loadLibrary(){
   const start = Date.now();
   try{
@@ -849,6 +875,7 @@ async function loadLibrary(){
     if(!res.ok) throw new Error('Lettura fallita: ' + res.status);
     const text = await res.text();
     library = text.trim() ? JSON.parse(text) : [];
+    applyLocalFavorites();
   }catch(e){
     console.error('Errore caricamento libreria da GitHub', e);
     library = [];
@@ -1085,8 +1112,7 @@ function buildCard(item, idx, order, isContinue, query){
 
 function toggleFavorite(event, idx){
   event.stopPropagation();
-  library[idx].favorite = !library[idx].favorite;
-  persist();
+  setFavorite(library[idx], !library[idx].favorite);
   render();
   showToast(library[idx].favorite ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti');
 }
@@ -1166,8 +1192,7 @@ function openDetail(idx){
   const favBtn = document.getElementById('detail-fav-btn');
   favBtn.innerHTML = item.favorite ? '★ Nei preferiti' : '☆ Aggiungi ai preferiti';
   favBtn.onclick = () => {
-    item.favorite = !item.favorite;
-    persist();
+    setFavorite(item, !item.favorite);
     favBtn.innerHTML = item.favorite ? '★ Nei preferiti' : '☆ Aggiungi ai preferiti';
     render();
     showToast(item.favorite ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti');
@@ -1594,10 +1619,9 @@ document.addEventListener('fullscreenchange', () => {
 
 document.getElementById('player-fav-btn').onclick = () => {
   if(curIdx === null) return;
-  library[curIdx].favorite = !library[curIdx].favorite;
+  setFavorite(library[curIdx], !library[curIdx].favorite);
   const btn = document.getElementById('player-fav-btn');
   btn.style.color = library[curIdx].favorite ? 'var(--gold)' : '#fff';
-  persist();
   showToast(library[curIdx].favorite ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti');
 };
 
