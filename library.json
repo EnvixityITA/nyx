@@ -89,6 +89,64 @@
   },
   {
     "type": "serie",
+    "title": "Puella Magi Madoka Magica",
+    "cover": "https://static.wikia.nocookie.net/madoka/images/5/5b/PMMM_Manga_Volume_1_Cover.jpg/revision/latest?cb=20211210125233",
+    "desc": "Una creatura di nome Kyubey esprime a Madoka e Sayaka un desiderio se accettano di diventare ragazze magiche e combattere esseri astratti chiamati streghe.",
+    "genre": "Anime",
+    "year": 2025,
+    "episodes": [
+      {
+        "title": "Episodio 1: La bussola indicava le tenebre",
+        "video": "drive:19m7c3hOahP4_s9QRqoZaV49UWvtQRwTb"
+      },
+      {
+        "title": "Episodio 2: La capitale del non ritorno",
+        "video": "drive:16cFJx7KHJ3sZP0dwPhdeTHZ06i3dSy20"
+      },
+      {
+        "title": "Episodio 3: Il villaggio dei residui",
+        "video": "drive:1fqFtkTUhSMyn4B_xPSFsPmkVFrM0IQ-x"
+      },
+      {
+        "title": "Episodio 4: Amicizia",
+        "video": "drive:1SUBoDX-o5pUttXkZRqIx8GjlWuKmv2_S"
+      },
+      {
+        "title": "Episodio 5: Qualcosa di nascosto",
+        "video": "drive:1CeKVeY1_vM1Cpe112NvifHKvDhvuTbF6"
+      },
+      {
+        "title": "Episodio 6: Richiamo",
+        "video": "drive:1-CqVvNZsbhrcGfbKugrA40YdjDbApnTn"
+      },
+      {
+        "title": "Episodio 7: La culla delle brame",
+        "video": "drive:1L6x-ohjjK3LCVZ2ojNYfdChY5SW4p1ix"
+      },
+      {
+        "title": "Episodio 8: La forma del desiderio",
+        "video": "drive:1HthXow-0EJkL9kKd_3iZygZKLkrjtMm9"
+      },
+      {
+        "title": "Episodio 9: Ritorno",
+        "video": "drive:1fk7GslXd1RzreNXiEQ6n_hm9XSB8dXfD"
+      },
+      {
+        "title": "Episodio 10: Tutto ciò che raccogli",
+        "video": "drive:1P8KlFAbaYftbwt0-cV3RyZmjO47IRh22"
+      },
+      {
+        "title": "Episodio 11: Valore",
+        "video": "drive:1lTzicJh2ppvyIY3bbW1-DYtxLg965EWf"
+      },
+      {
+        "title": "Episodio 12: Oro",
+        "video": "drive:1HR86CFsYGnxyefpfrVXi6Qba3OypDXGH"
+      }
+    ]
+  },
+  {
+    "type": "serie",
     "title": "Made in Abyss",
     "cover": "https://upload.wikimedia.org/wikipedia/en/3/36/Made_in_Abyss_KV.jpg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original",
     "desc": "Riko, una giovane orfana, sogna di esplorare l'Abisso, una gigantesca voragine inesplorata e ricca di misteri, reperti e creature pericolose. Dopo aver trovato Reg, un ragazzo-robot senza memoria nato nelle profondità dell'Abisso, i due intraprendono un viaggio senza ritorno verso il fondo per cercare la madre di Riko. Sotto un'estetica fiabesca, la stagione rivela presto una natura spietata, mostrando gli orrori e la dolorosa Maledizione dell'Abisso che colpisce chiunque provi a risalire.",
