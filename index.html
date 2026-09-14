@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nyx</title>
+<title>Nyx — la tua libreria</title>
 <style>
   :root{
     --bg:#0A0A0C;
@@ -359,8 +359,14 @@
   .video-frame{cursor:pointer;}
   .video-frame.drive-mode .controls-bar,
   .video-frame.drive-mode .buffer-spinner,
-  .video-frame.drive-mode .center-pulse{display:none !important;}
+  .video-frame.drive-mode .center-pulse,
+  .video-frame.drive-mode .seek-flash,
+  .video-frame.drive-mode .next-up-overlay{display:none !important;}
   .video-frame.drive-mode{cursor:default;}
+  #player-drive-frame{
+    display:block;width:100%;aspect-ratio:16/9;max-height:64vh;
+    border:0;outline:0;background:#000;vertical-align:top;
+  }
   .video-frame.controls-hidden, .video-frame.controls-hidden video{cursor:none;}
 
   .video-frame:fullscreen,
@@ -669,7 +675,7 @@
       <div class="player-main">
         <div class="video-frame" id="video-frame">
           <video id="player-video" playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload noplaybackrate nofullscreen noremoteplayback" x-webkit-airplay="deny" oncontextmenu="return false;"></video>
-          <iframe id="player-drive-frame" style="display:none;width:100%;aspect-ratio:16/9;border:0;background:#000;" allow="autoplay" allowfullscreen></iframe>
+          <iframe id="player-drive-frame" style="display:none;" allow="autoplay" allowfullscreen></iframe>
           <div class="buffer-spinner" id="buffer-spinner"></div>
           <div class="center-pulse" id="center-pulse"></div>
           <div class="seek-flash left" id="seek-flash-left"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg> 10s</div>
@@ -1303,7 +1309,7 @@ function playEpisode(epIdx, isResumeFromOpen){
   });
   const playingEl = document.querySelector(`#ep-sidebar .ep-item[data-epidx="${epIdx}"]`);
   if(playingEl) playingEl.scrollIntoView({block:'nearest'});
-  video().play().catch(()=>{});
+  if(!isDriveSource(ep.video)) video().play().catch(()=>{});
 }
 
 function loadSource(src, startAt){
