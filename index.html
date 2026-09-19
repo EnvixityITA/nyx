@@ -904,7 +904,7 @@ body.nyx-cinema #site-header,body.nyx-cinema .filter-bar{opacity:.3;transition:o
 body.nyx-cinema #site-header:hover{opacity:1;}
 /* testata */
 #site-header{background:linear-gradient(180deg,rgba(16,16,20,.96),rgba(16,16,20,.62));backdrop-filter:blur(12px);border-bottom:1px solid var(--border-soft);}
-.logo{font-weight:800;font-size:25px;letter-spacing:-.6px;background:none;-webkit-text-fill-color:var(--accent);color:var(--accent);filter:none;}
+.logo{font-weight:800;font-size:25px;letter-spacing:-.6px;background:none;-webkit-background-clip:initial;background-clip:initial;-webkit-text-fill-color:var(--accent);color:var(--accent);filter:none;}
 .logo:hover{filter:none;transform:scale(1.04);}
 nav{border-radius:999px;}
 .nav-pill-bg{background:rgba(255,255,255,.12);box-shadow:none;}
@@ -1543,9 +1543,13 @@ function setGenreFilter(g){
 }
 
 /* ---------------- Sorprendimi (titolo casuale) ---------------- */
+let lastSurpriseIdx = -1;
 function surpriseMe(){
   if(library.length === 0) return;
-  const idx = Math.floor(Math.random() * library.length);
+  if(library.length === 1){ openDetail(0); return; }
+  let idx;
+  do { idx = Math.floor(Math.random() * library.length); } while(idx === lastSurpriseIdx);
+  lastSurpriseIdx = idx;
   openDetail(idx);
 }
 
